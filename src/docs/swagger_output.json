@@ -1,0 +1,2423 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "Evently API",
+    "description": "API for Evently",
+    "version": "1.0.0"
+  },
+  "host": [
+    "theodev.myftp.org:89"
+  ],
+  "basePath": "/",
+  "schemes": [
+    "https"
+  ],
+  "securityDefinitions": {
+    "Bearer": {
+      "type": "apiKey",
+      "name": "Authorization",
+      "in": "header",
+      "description": "Enter your Bearer token in the format **Bearer <token>**"
+    }
+  },
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/auth/apple/": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "description": "Authentification avec apple voir la réponse, si needStepTwo = true dans ce cas tu affiches une page pour demander username firstname et lastname et tu fais apple a l",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "identityToken": {
+                  "example": "any"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful authentication",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "needStepTwo": {
+                  "type": "string",
+                  "example": "true"
+                },
+                "user": {
+                  "$ref": "#/definitions/User"
+                }
+              },
+              "xml": {
+                "name": "main"
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "422": {
+            "description": "Unprocessable Entity"
+          }
+        }
+      }
+    },
+    "/auth/apple-callback/": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "description": "Authentification avec apple avec callback evently.",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "code": {
+                  "example": "any"
+                },
+                "state": {
+                  "example": "any"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful authentication",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "needStepTwo": {
+                  "type": "string",
+                  "example": "true"
+                },
+                "user": {
+                  "$ref": "#/definitions/User"
+                }
+              },
+              "xml": {
+                "name": "main"
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity"
+          }
+        }
+      }
+    },
+    "/auth/google/": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "description": "Authentification avec google voir la réponse, si needStepTwo = true dans ce cas tu affiches une page pour demander username firstname et lastname et tu fais apple a l",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "identityToken": {
+                  "example": "any"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful authentication",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "needStepTwo": {
+                  "type": "string",
+                  "example": "true"
+                },
+                "user": {
+                  "$ref": "#/definitions/User"
+                }
+              },
+              "xml": {
+                "name": "main"
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity"
+          }
+        }
+      }
+    },
+    "/auth/google-callback/": {
+      "get": {
+        "tags": [
+          "Auth"
+        ],
+        "description": "Authentification avec google avec callback evently.",
+        "parameters": [
+          {
+            "name": "code",
+            "in": "query",
+            "type": "string"
+          },
+          {
+            "name": "state",
+            "in": "query",
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful authentication",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "needStepTwo": {
+                  "type": "string",
+                  "example": "true"
+                },
+                "user": {
+                  "$ref": "#/definitions/User"
+                }
+              },
+              "xml": {
+                "name": "main"
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity"
+          }
+        }
+      }
+    },
+    "/auth/from-provider/step-two": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "description": "Seconde route une fois que tu as utilisé la première route pour utiliser un service tiers, elle attend les infos complémentaires pour que le compte soit valide",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "description": "Informations nécessaires pour compléter le compte utilisateur",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "username": {
+                  "type": "string",
+                  "example": "johndoe123"
+                },
+                "firstname": {
+                  "type": "string",
+                  "example": "John"
+                },
+                "lastname": {
+                  "type": "string",
+                  "example": "Doe"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful authentication",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "needStepTwo": {
+                  "type": "string",
+                  "example": "true"
+                },
+                "user": {
+                  "$ref": "#/definitions/User"
+                }
+              },
+              "xml": {
+                "name": "main"
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "422": {
+            "description": "Unprocessable Entity"
+          }
+        }
+      }
+    },
+    "/auth/socket/": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "description": "Authentification avec socket.",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "identityToken": {
+                  "example": "any"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful authentication",
+            "schema": {
+              "$ref": "#/definitions/User"
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "422": {
+            "description": "Unprocessable Entity"
+          }
+        }
+      }
+    },
+    "/categories": {
+      "post": {
+        "tags": [
+          "Category"
+        ],
+        "description": "Create a new category",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "description": "Category details",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "example": "Example"
+                },
+                "icon": {
+                  "type": "string",
+                  "example": "icon"
+                },
+                "color": {
+                  "type": "string",
+                  "example": "#FFFFFF"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "schema": {
+              "$ref": "#/definitions/Category"
+            },
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "422": {
+            "description": "Unprocessable Entity"
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Category"
+        ],
+        "description": "Get user categories",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "schema": {
+              "$ref": "#/definitions/Category"
+            },
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "422": {
+            "description": "Unprocessable Entity"
+          }
+        }
+      }
+    },
+    "/categories/default": {
+      "get": {
+        "tags": [
+          "Category"
+        ],
+        "description": "Get default categories",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "schema": {
+              "$ref": "#/definitions/Category"
+            },
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "422": {
+            "description": "Unprocessable Entity"
+          }
+        }
+      }
+    },
+    "/categories/{id}": {
+      "put": {
+        "tags": [
+          "Category"
+        ],
+        "description": "Update category",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "example": "Updated name"
+                },
+                "icon": {
+                  "type": "string",
+                  "example": "updated-icon"
+                },
+                "color": {
+                  "type": "string",
+                  "example": "#000000"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "401": {
+            "description": "Unauthorized"
+          },
+          "422": {
+            "description": "Unprocessable Entity"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Category"
+        ],
+        "description": "Delete category",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "401": {
+            "description": "Unauthorized"
+          },
+          "422": {
+            "description": "Unprocessable Entity"
+          }
+        }
+      }
+    },
+    "/events": {
+      "post": {
+        "tags": [
+          "Event"
+        ],
+        "description": "Create new event. Optionnellement, ajoutez des amis via leur username (tableau \"friends\").",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "example": "Event name"
+                },
+                "description": {
+                  "type": "string",
+                  "example": "Event description"
+                },
+                "folderID": {
+                  "type": "boolean",
+                  "example": false
+                },
+                "recurrencePattern": {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "example": "string"
+                    },
+                    "enum": {
+                      "type": "array",
+                      "example": [
+                        "daily",
+                        "weekly",
+                        "monthly",
+                        "yearly"
+                      ],
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "example": {
+                      "type": "string",
+                      "example": "daily"
+                    }
+                  }
+                },
+                "targetDate": {
+                  "type": "string",
+                  "example": "2024-01-01T00:00:00.000Z"
+                },
+                "categoryID": {
+                  "type": "number",
+                  "example": 1
+                },
+                "friends": {
+                  "type": "array",
+                  "example": [
+                    "username1",
+                    "username2"
+                  ],
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "401": {
+            "description": "Unauthorized"
+          },
+          "422": {
+            "description": "Unprocessable Entity"
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Event"
+        ],
+        "description": "Get user events",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "401": {
+            "description": "Unauthorized"
+          },
+          "422": {
+            "description": "Unprocessable Entity"
+          }
+        }
+      }
+    },
+    "/events/{id}": {
+      "put": {
+        "tags": [
+          "Event"
+        ],
+        "description": "Update event. Optionnellement, ajoutez des amis via leur username (tableau \"friends\").",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "example": "Updated event name"
+                },
+                "description": {
+                  "type": "string",
+                  "example": "Updated event description"
+                },
+                "recurrencePattern": {
+                  "type": "string",
+                  "example": "weekly"
+                },
+                "interval": {
+                  "type": "number",
+                  "example": 2
+                },
+                "targetDate": {
+                  "type": "string",
+                  "example": "2024-02-01T00:00:00.000Z"
+                },
+                "categoryID": {
+                  "type": "number",
+                  "example": 2
+                },
+                "friends": {
+                  "type": "array",
+                  "example": [
+                    "username1",
+                    "username2"
+                  ],
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "401": {
+            "description": "Unauthorized"
+          },
+          "422": {
+            "description": "Unprocessable Entity"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Event"
+        ],
+        "description": "Delete event",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "401": {
+            "description": "Unauthorized"
+          },
+          "422": {
+            "description": "Unprocessable Entity"
+          }
+        }
+      }
+    },
+    "/events/share/{id}": {
+      "post": {
+        "tags": [
+          "Event"
+        ],
+        "description": "Generate an invite token for an event (only for the event creator)",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "401": {
+            "description": "Unauthorized"
+          },
+          "422": {
+            "description": "Unprocessable Entity"
+          }
+        }
+      }
+    },
+    "/events/join": {
+      "post": {
+        "tags": [
+          "Event"
+        ],
+        "description": "Rejoindre un event à l\\'aide d\\'un token d\\'invitation.",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "inviteToken": {
+                  "example": "any"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Event rejoint avec succès.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "message": {
+                  "type": "string",
+                  "example": "Event rejoint avec succès"
+                }
+              },
+              "xml": {
+                "name": "main"
+              }
+            }
+          },
+          "400": {
+            "description": "L'utilisateur est déjà le créateur ou déjà membre de l'event.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "status": {
+                  "type": "number",
+                  "example": 400
+                },
+                "error": {
+                  "type": "string",
+                  "example": "Vous êtes déjà le propriétaire de cet event"
+                }
+              },
+              "xml": {
+                "name": "main"
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Event introuvable pour le token fourni.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "status": {
+                  "type": "number",
+                  "example": 404
+                },
+                "error": {
+                  "type": "string",
+                  "example": "Event not found for the given token"
+                }
+              },
+              "xml": {
+                "name": "main"
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity"
+          }
+        }
+      }
+    },
+    "/events/leave/{id}": {
+      "post": {
+        "tags": [
+          "Event"
+        ],
+        "description": "Quitter un event (si l\\'utilisateur n\\'en est pas le créateur).",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "integer",
+            "description": "ID de l'event à quitter"
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Event quitté avec succès."
+          },
+          "400": {
+            "description": "Le créateur ne peut pas quitter son propre event.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "status": {
+                  "type": "number",
+                  "example": 400
+                },
+                "error": {
+                  "type": "string",
+                  "example": "Le propriétaire ne peut pas quitter cet event"
+                }
+              },
+              "xml": {
+                "name": "main"
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Event introuvable ou l'utilisateur n'est pas membre.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "status": {
+                  "type": "number",
+                  "example": 404
+                },
+                "error": {
+                  "type": "string",
+                  "example": "Event not found or you are not a member"
+                }
+              },
+              "xml": {
+                "name": "main"
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity"
+          }
+        }
+      }
+    },
+    "/folders": {
+      "post": {
+        "tags": [
+          "Folder"
+        ],
+        "description": "Create a new folder. Optionnellement, ajoutez des amis via leur username (tableau \"friends\").",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "description": "Folder creation data",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "example": "Folder name"
+                },
+                "friends": {
+                  "type": "array",
+                  "example": [
+                    "username1",
+                    "username2"
+                  ],
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Folder created successfully.",
+            "schema": {
+              "$ref": "#/definitions/Folder"
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "422": {
+            "description": "Missing required fields.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "status": {
+                  "type": "number",
+                  "example": 422
+                },
+                "msg": {
+                  "type": "string",
+                  "example": "Missing required fields"
+                }
+              },
+              "xml": {
+                "name": "main"
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Folder"
+        ],
+        "description": "Get folders accessible by the user (owner or invited).",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Folders retrieved successfully.",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Folder"
+              },
+              "xml": {
+                "name": "main"
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "422": {
+            "description": "Unprocessable Entity"
+          }
+        }
+      }
+    },
+    "/folders/{id}": {
+      "put": {
+        "tags": [
+          "Folder"
+        ],
+        "description": "Update folder details (owner only). Optionnellement, ajoutez des amis via leur username (tableau \"friends\").",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "integer",
+            "description": "ID of the folder to update"
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "description": "Folder update data",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "example": "Updated folder name"
+                },
+                "friends": {
+                  "type": "array",
+                  "example": [
+                    "username1",
+                    "username2"
+                  ],
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Folder updated successfully.",
+            "schema": {
+              "$ref": "#/definitions/Folder"
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Unauthorized to update this folder.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "status": {
+                  "type": "number",
+                  "example": 403
+                },
+                "msg": {
+                  "type": "string",
+                  "example": "Vous n'êtes pas autorisé à modifier ce folder"
+                }
+              },
+              "xml": {
+                "name": "main"
+              }
+            }
+          },
+          "404": {
+            "description": "Folder not found.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "status": {
+                  "type": "number",
+                  "example": 404
+                },
+                "msg": {
+                  "type": "string",
+                  "example": "Folder not found"
+                }
+              },
+              "xml": {
+                "name": "main"
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Folder"
+        ],
+        "description": "Delete a folder (owner only).",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "integer",
+            "description": "ID of the folder to delete"
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Folder deleted successfully."
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "422": {
+            "description": "Unprocessable Entity"
+          }
+        }
+      }
+    },
+    "/folders/quit/{id}": {
+      "post": {
+        "tags": [
+          "Folder"
+        ],
+        "description": "Leave a folder (if not the owner).",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "integer",
+            "description": "ID of the folder to leave"
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Left the folder successfully."
+          },
+          "400": {
+            "description": "Owner cannot leave his own folder.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "status": {
+                  "type": "number",
+                  "example": 400
+                },
+                "msg": {
+                  "type": "string",
+                  "example": "Le propriétaire ne peut pas quitter le folder"
+                }
+              },
+              "xml": {
+                "name": "main"
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Folder or membership not found.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "status": {
+                  "type": "number",
+                  "example": 404
+                },
+                "msg": {
+                  "type": "string",
+                  "example": "Folder not found or you are not a member"
+                }
+              },
+              "xml": {
+                "name": "main"
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity"
+          }
+        }
+      }
+    },
+    "/folders/share/{id}": {
+      "post": {
+        "tags": [
+          "Folder"
+        ],
+        "description": "Generate an invite token for a folder (owner only).",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "integer",
+            "description": "ID of the folder for which to generate an invite token"
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Invite token generated successfully.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "inviteToken": {
+                  "type": "string",
+                  "example": "string"
+                }
+              },
+              "xml": {
+                "name": "main"
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Unauthorized to generate invite token for this folder.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "status": {
+                  "type": "number",
+                  "example": 403
+                },
+                "msg": {
+                  "type": "string",
+                  "example": "Seul le propriétaire peut générer un lien d'invitation"
+                }
+              },
+              "xml": {
+                "name": "main"
+              }
+            }
+          },
+          "404": {
+            "description": "Folder not found.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "status": {
+                  "type": "number",
+                  "example": 404
+                },
+                "msg": {
+                  "type": "string",
+                  "example": "Folder not found"
+                }
+              },
+              "xml": {
+                "name": "main"
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity"
+          }
+        }
+      }
+    },
+    "/folders/join": {
+      "post": {
+        "tags": [
+          "Folder"
+        ],
+        "description": "Join a folder using an invitation token.",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "description": "Invitation token data",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "inviteToken": {
+                  "type": "string",
+                  "example": "Invitation token"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Folder joined successfully.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "msg": {
+                  "type": "string",
+                  "example": "Folder rejoint avec succès"
+                }
+              },
+              "xml": {
+                "name": "main"
+              }
+            }
+          },
+          "400": {
+            "description": "User is already the owner or already a member of the folder.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "status": {
+                  "type": "number",
+                  "example": 400
+                },
+                "msg": {
+                  "type": "string",
+                  "example": "You are already the owner or a member of this folder"
+                }
+              },
+              "xml": {
+                "name": "main"
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Folder not found for the given token.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "status": {
+                  "type": "number",
+                  "example": 404
+                },
+                "msg": {
+                  "type": "string",
+                  "example": "Folder not found for the given token"
+                }
+              },
+              "xml": {
+                "name": "main"
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity"
+          }
+        }
+      }
+    },
+    "/friends-request/": {
+      "post": {
+        "tags": [
+          "Friends"
+        ],
+        "description": "Send a friend request to a user.",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "description": "Username of the friends",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "searchField": {
+                  "type": "string",
+                  "example": "azeraze#12345"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Friend request sent successfully.",
+            "schema": {
+              "$ref": "#/definitions/FriendsRequest"
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "User not found.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "status": {
+                  "type": "string",
+                  "example": "404"
+                },
+                "msg": {
+                  "type": "string",
+                  "example": "User not found."
+                }
+              },
+              "xml": {
+                "name": "main"
+              }
+            }
+          },
+          "422": {
+            "description": "Friend request already exists or they are already friends.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "status": {
+                  "type": "string",
+                  "example": "422"
+                },
+                "msg": {
+                  "type": "string",
+                  "example": "Already friends or request exists."
+                }
+              },
+              "xml": {
+                "name": "main"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/friends-request/{username}": {
+      "delete": {
+        "tags": [
+          "Friends"
+        ],
+        "description": "Remove a friend.",
+        "parameters": [
+          {
+            "name": "username",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "description": "Username of the user",
+            "example": "johndoe"
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Friend removed successfully.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "status": {
+                  "type": "string",
+                  "example": "200"
+                },
+                "msg": {
+                  "type": "string",
+                  "example": "Bien supprimé"
+                }
+              },
+              "xml": {
+                "name": "main"
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "User not found.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "status": {
+                  "type": "string",
+                  "example": "404"
+                },
+                "msg": {
+                  "type": "string",
+                  "example": "User not found."
+                }
+              },
+              "xml": {
+                "name": "main"
+              }
+            }
+          },
+          "422": {
+            "description": "Users are not friends.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "status": {
+                  "type": "string",
+                  "example": "422"
+                },
+                "msg": {
+                  "type": "string",
+                  "example": "They are not friends"
+                }
+              },
+              "xml": {
+                "name": "main"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/friends-request": {
+      "get": {
+        "tags": [
+          "Friends"
+        ],
+        "description": "Get friend requests for the logged-in user.",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of friend requests received by the logged-in user.",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/FriendsRequest"
+              },
+              "xml": {
+                "name": "main"
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "422": {
+            "description": "Unprocessable Entity"
+          }
+        }
+      }
+    },
+    "/friends-request/{requestId}": {
+      "put": {
+        "tags": [
+          "Friends"
+        ],
+        "description": "Accept or decline a friend request.",
+        "parameters": [
+          {
+            "name": "requestId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "description": "ID of the friend request to accept or decline",
+            "example": 1
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "description": "Friend request acceptance data",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "accept": {
+                  "type": "boolean",
+                  "example": true
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Friend request accepted successfully.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "isAccepted": {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "example": "boolean"
+                    }
+                  }
+                },
+                "user": {
+                  "$ref": "#/definitions/User"
+                }
+              },
+              "xml": {
+                "name": "main"
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Friend request not found.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "status": {
+                  "type": "string",
+                  "example": "404"
+                },
+                "msg": {
+                  "type": "string",
+                  "example": "Friend request not found."
+                }
+              },
+              "xml": {
+                "name": "main"
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity"
+          }
+        }
+      }
+    },
+    "/friends-request/sent": {
+      "get": {
+        "tags": [
+          "Friends"
+        ],
+        "description": "Get friend requests sent by the logged-in user.",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of friend requests sent by the logged-in user.",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/FriendsRequest"
+              },
+              "xml": {
+                "name": "main"
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "422": {
+            "description": "Unprocessable Entity"
+          }
+        }
+      }
+    },
+    "/friends-request/sent/{requestId}": {
+      "delete": {
+        "tags": [
+          "Friends"
+        ],
+        "description": "Delete a sent friend request.",
+        "parameters": [
+          {
+            "name": "requestId",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "description": "ID of the friend request to delete",
+            "example": 1
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Friend request deleted successfully.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "status": {
+                  "type": "string",
+                  "example": "200"
+                },
+                "msg": {
+                  "type": "string",
+                  "example": "Friend request deleted successfully."
+                }
+              },
+              "xml": {
+                "name": "main"
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Friend request not found.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "status": {
+                  "type": "string",
+                  "example": "404"
+                },
+                "msg": {
+                  "type": "string",
+                  "example": "Friend request not found."
+                }
+              },
+              "xml": {
+                "name": "main"
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity"
+          }
+        }
+      }
+    },
+    "/user/friends": {
+      "get": {
+        "tags": [
+          "User"
+        ],
+        "description": "Get user friends.",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "User friends retrieved successfully.",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/User"
+              },
+              "xml": {
+                "name": "main"
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "422": {
+            "description": "Unprocessable Entity"
+          }
+        }
+      }
+    },
+    "/user/me": {
+      "get": {
+        "tags": [
+          "User"
+        ],
+        "description": "Get all information of the connected user.",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "User information retrieved successfully.",
+            "schema": {
+              "$ref": "#/definitions/User"
+            }
+          },
+          "401": {
+            "description": "Unauthorized. No valid token provided.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "status": {
+                  "type": "number",
+                  "example": 401
+                },
+                "msg": {
+                  "type": "string",
+                  "example": "Unauthorized."
+                }
+              },
+              "xml": {
+                "name": "main"
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity"
+          }
+        }
+      }
+    },
+    "/user/": {
+      "delete": {
+        "tags": [
+          "User"
+        ],
+        "description": "Delete an User.",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "User information deleted successfully.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "msg": {
+                  "type": "string",
+                  "example": ""
+                },
+                "status": {
+                  "type": "number",
+                  "example": 200
+                }
+              },
+              "xml": {
+                "name": "main"
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized. No valid token provided.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "status": {
+                  "type": "number",
+                  "example": 401
+                },
+                "msg": {
+                  "type": "string",
+                  "example": "Unauthorized."
+                }
+              },
+              "xml": {
+                "name": "main"
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "User"
+        ],
+        "description": "Update user details.",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "description": "User update data",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/User"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "User updated successfully.",
+            "schema": {
+              "$ref": "#/definitions/User"
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "User not found.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "status": {
+                  "type": "number",
+                  "example": 404
+                },
+                "msg": {
+                  "type": "string",
+                  "example": "User not found."
+                }
+              },
+              "xml": {
+                "name": "main"
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable entity.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "status": {
+                  "type": "number",
+                  "example": 422
+                },
+                "msg": {
+                  "type": "string",
+                  "example": "Required fields missing."
+                }
+              },
+              "xml": {
+                "name": "main"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/user/register": {
+      "post": {
+        "tags": [
+          "User"
+        ],
+        "description": "Register a new user.",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "description": "User registration data",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/User"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "422": {
+            "description": "Unprocessable Entity"
+          }
+        }
+      }
+    },
+    "/user/available/:email": {
+      "get": {
+        "tags": [
+          "User"
+        ],
+        "description": "Check if an email is available.",
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "422": {
+            "description": "Unprocessable Entity"
+          }
+        }
+      }
+    },
+    "/user/login": {
+      "post": {
+        "tags": [
+          "User"
+        ],
+        "description": "User login.",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "description": "User login data",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "email": {
+                  "type": "string",
+                  "example": "user@example.com"
+                },
+                "password": {
+                  "type": "string",
+                  "example": "Password123"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "User login successful.",
+            "schema": {
+              "$ref": "#/definitions/User"
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity"
+          }
+        }
+      }
+    },
+    "/user/refresh-token/{refreshToken}": {
+      "get": {
+        "tags": [
+          "User"
+        ],
+        "description": "Refresh user token.",
+        "parameters": [
+          {
+            "name": "refreshToken",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "description": "Refresh token"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "User token refreshed successfully.",
+            "schema": {
+              "$ref": "#/definitions/User"
+            }
+          },
+          "401": {
+            "description": "Unauthorized. No valid token provided.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "status": {
+                  "type": "number",
+                  "example": 401
+                },
+                "msg": {
+                  "type": "string",
+                  "example": "Aucun token valide trouvé."
+                }
+              },
+              "xml": {
+                "name": "main"
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity"
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "Category": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "number",
+          "example": 666
+        },
+        "name": {
+          "type": "string",
+          "example": "foobar"
+        },
+        "icon": {
+          "type": "string",
+          "example": "foobar"
+        },
+        "color": {
+          "type": "string",
+          "example": "foobar"
+        },
+        "default": {
+          "type": "boolean",
+          "example": true
+        },
+        "user": {
+          "$ref": "#/definitions/User"
+        }
+      }
+    },
+    "RecurrencePattern": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "example": "string"
+        },
+        "enum": {
+          "type": "array",
+          "example": [
+            "monthly",
+            "yearly",
+            "unique"
+          ],
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "Event": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "number",
+          "example": 666
+        },
+        "name": {
+          "type": "string",
+          "example": "foobar"
+        },
+        "description": {
+          "type": "string",
+          "example": "foobar"
+        },
+        "location": {
+          "type": "string",
+          "example": "foobar"
+        },
+        "recurrencePattern": {
+          "type": "string",
+          "example": "monthly"
+        },
+        "interval": {
+          "type": "number",
+          "example": 666
+        },
+        "maxOccurence": {
+          "type": "number",
+          "example": 666
+        },
+        "targetDate": {
+          "type": "string",
+          "example": "2019-01-01T00:00:00.000Z"
+        },
+        "inviteToken": {
+          "type": "string",
+          "example": "foobar"
+        },
+        "categoryID": {
+          "type": "number",
+          "example": 666
+        },
+        "userID": {
+          "type": "number",
+          "example": 666
+        },
+        "folderID": {
+          "type": "number",
+          "example": 666
+        },
+        "createdAt": {
+          "type": "string",
+          "example": "2019-01-01T00:00:00.000Z"
+        },
+        "deletedAt": {
+          "type": "string",
+          "example": "2019-01-01T00:00:00.000Z"
+        },
+        "joinedUser": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/JoinedEventEntity"
+          }
+        }
+      }
+    },
+    "Folder": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "number",
+          "example": 666
+        },
+        "name": {
+          "type": "string",
+          "example": "foobar"
+        },
+        "inviteToken": {
+          "type": "string",
+          "example": "foobar"
+        },
+        "userID": {
+          "type": "number",
+          "example": 666
+        },
+        "createdAt": {
+          "type": "string",
+          "example": "2019-01-01T00:00:00.000Z"
+        },
+        "deletedAt": {
+          "type": "string",
+          "example": "2019-01-01T00:00:00.000Z"
+        },
+        "joinedUser": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/JoinedFolderEntity"
+          }
+        },
+        "events": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Event"
+          }
+        }
+      }
+    },
+    "FriendsRequest": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "number",
+          "example": 666
+        },
+        "createdAt": {
+          "type": "string",
+          "example": "2019-01-01T00:00:00.000Z"
+        },
+        "asker": {
+          "$ref": "#/definitions/User"
+        },
+        "receiver": {
+          "$ref": "#/definitions/User"
+        }
+      }
+    },
+    "Friends": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "number",
+          "example": 666
+        },
+        "createdAt": {
+          "type": "string",
+          "example": "2019-01-01T00:00:00.000Z"
+        },
+        "user1": {
+          "$ref": "#/definitions/User"
+        },
+        "user2": {
+          "$ref": "#/definitions/User"
+        }
+      }
+    },
+    "JoinedEventEntity": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "number",
+          "example": 666
+        },
+        "joinDate": {
+          "type": "string",
+          "example": "2019-01-01T00:00:00.000Z"
+        },
+        "leaveDate": {
+          "type": "string",
+          "example": "2019-01-01T00:00:00.000Z"
+        },
+        "event": {
+          "$ref": "#/definitions/Event"
+        },
+        "user": {
+          "$ref": "#/definitions/User"
+        }
+      }
+    },
+    "JoinedFolderEntity": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "number",
+          "example": 666
+        },
+        "userID": {
+          "type": "number",
+          "example": 666
+        },
+        "joinDate": {
+          "type": "string",
+          "example": "2019-01-01T00:00:00.000Z"
+        },
+        "leaveDate": {
+          "type": "string",
+          "example": "2019-01-01T00:00:00.000Z"
+        },
+        "folder": {
+          "$ref": "#/definitions/Folder"
+        }
+      }
+    },
+    "User": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "number",
+          "example": 666
+        },
+        "username": {
+          "type": "string",
+          "example": "foobar"
+        },
+        "firstName": {
+          "type": "string",
+          "example": "foobar"
+        },
+        "lastName": {
+          "type": "string",
+          "example": "foobar"
+        },
+        "email": {
+          "type": "string",
+          "example": "foobar"
+        },
+        "password": {
+          "type": "string",
+          "example": "foobar"
+        },
+        "provider": {
+          "type": "string",
+          "example": "foobar"
+        },
+        "isDeleted": {
+          "type": "boolean",
+          "example": true
+        },
+        "isCompleted": {
+          "type": "boolean",
+          "example": true
+        },
+        "createdAt": {
+          "type": "string",
+          "example": "2019-01-01T00:00:00.000Z"
+        },
+        "deletedAt": {
+          "type": "string",
+          "example": "2019-01-01T00:00:00.000Z"
+        },
+        "categories": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Category"
+          }
+        },
+        "events": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Event"
+          }
+        },
+        "joinedEvents": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/JoinedEventEntity"
+          }
+        }
+      }
+    }
+  },
+  "security": [
+    {
+      "Bearer": []
+    }
+  ]
+}

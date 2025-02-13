@@ -1,0 +1,22 @@
+export const ResponseMessage = {
+    MISSING_REQUIRED_FIELDS: 'Missing required fields',
+    FOLDER_NOT_FOUND: 'Folder not found',
+    UNAUTHORIZED_UPDATE_FOLDER: "Vous n'êtes pas autorisé à modifier ce folder",
+    UNAUTHORIZED_DELETE_FOLDER: "Vous n'êtes pas autorisé à supprimer ce folder",
+    OWNER_CANNOT_QUIT_FOLDER: 'Le propriétaire ne peut pas quitter le folder',
+    FOLDER_NOT_FOUND_OR_NOT_MEMBER: 'Folder not found or you are not a member',
+    UNAUTHORIZED_SHARE_FOLDER: "Seul le propriétaire peut générer un lien d'invitation",
+    MISSING_INVITE_TOKEN: 'Missing inviteToken',
+    FOLDER_NOT_FOUND_FOR_TOKEN: 'Folder not found for the given token',
+    ALREADY_OWNER: 'Vous êtes déjà le propriétaire de ce folder',
+    ALREADY_JOINED_FOLDER: 'Vous avez déjà rejoint ce folder',
+    UNAUTHORIZED_FOLDER_ASSIGNMENT: "Vous n'êtes pas autorisé à assigner ce folder",
+    CATEGORY_NOT_FOUND: 'Category not found',
+    EVENT_NOT_FOUND: 'Event not found',
+    EVENT_NOT_FOUND_OR_NOT_OWNER: 'Event not found or you are not the owner',
+    EVENT_NOT_FOUND_FOR_TOKEN: 'Event not found for the given token',
+    ALREADY_OWNER_EVENT: 'Vous êtes déjà le propriétaire de cet event',
+    ALREADY_JOINED_EVENT: 'Vous avez déjà rejoint cet event',
+    OWNER_CANNOT_QUIT_EVENT: 'Le propriétaire ne peut pas quitter cet event',
+    EVENT_NOT_FOUND_OR_NOT_MEMBER: 'Event not found or you are not a member'
+};
