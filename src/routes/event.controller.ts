@@ -177,9 +177,8 @@ eventRouter.put('/:id', apiTokenMiddleware, async (req, res) => {
 
         // Traitement optionnel de l'ajout d'amis via "friends"
         if (friends && Array.isArray(friends)) {
-            const userRepo = getRepository(User);
             for (const friendUsername of friends) {
-                const friendUser = await userRepo.findOne({where: {username: friendUsername}});
+                const friendUser = await UserRepository.findOne({where: {username: friendUsername}});
                 if (!friendUser) {
                     return res.status(Code.NOT_FOUND).send(error(`Friend with username "${friendUsername}" not found`));
                 }
