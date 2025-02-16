@@ -17,6 +17,7 @@ import {friendsRouter} from "./routes/friends.controller";
 import {categoryRouter} from "./routes/category.controller";
 import {eventRouter} from "./routes/event.controller";
 import {folderRouter} from "./routes/folder.controller";
+import {initJobs} from "./jobs/manager.job";
 
 export class Index {
     static jwtKey = process.env.JWT_SECRET;
@@ -45,7 +46,7 @@ export class Index {
     static swaggerConfig() {
         const swaggerUi = require('swagger-ui-express')
         Index.app.use('/docs', basicAuth({
-            users: {'DOCUSERNAME': 'DOCPASSWORD'},
+            users: { [process.env.DOC_USERNAME] : process.env.DOC_PASSWORD},
             challenge: true,
         }), swaggerUi.serve, swaggerUi.setup(swaggerJsonFile))
     }
@@ -57,7 +58,7 @@ export class Index {
             sessionMaxAge: 900,
             onAuthenticate: (req,username,password) => {
                 // CAN INSERT REAL LOGIC HERE
-                return((username==='swagger-splitstats') && (password==='swagger-splitpassword') );
+                return((username===process.env.STATS_USERNAME) && (password===process.env.STATS_PASSWORD) );
             }
         }))
     }
@@ -71,7 +72,7 @@ export class Index {
 
     static redirectConfig() {
         Index.app.use((req, res) => {
-            res.redirect('https://remi-weil.fr');
+            res.redirect('https://app.evently-app.fr');
         });
     }
 
@@ -92,6 +93,10 @@ export class Index {
         });
     }
 
+    static initJobs() {
+        initJobs();
+    }
+
     static async main() {
         Index.swaggerConfig()
         Index.statsConfig()
@@ -100,6 +105,7 @@ export class Index {
         Index.socketConfig()
         Index.imageFolder()
         Index.redirectConfig()
+        Index.initJobs()
         await Index.databaseConfig()
         Index.startServer()
     }

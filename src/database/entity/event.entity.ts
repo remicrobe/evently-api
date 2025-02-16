@@ -33,6 +33,9 @@ export class Event {
     @Column({ nullable: true })
     location: string;
 
+    @Column({})
+    childCreated: boolean;
+
     @Column({
         type: "enum",
         enum: RecurrencePattern,

@@ -236,6 +236,7 @@ eventRouter.get('/', apiTokenMiddleware, async (req, res) => {
             .orWhere("joinedUserUser.id = :userId", {userId: user.id})
             .orWhere("folder.userID = :userId", {userId: user.id})
             .orWhere("folderJoinedUser.userID = :userId", {userId: user.id})
+            .orderBy('event.targetDate', 'ASC')
             .getMany();
 
         const eventsWithMappedUsers = events.map(event => ({
