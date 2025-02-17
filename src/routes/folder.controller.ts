@@ -7,11 +7,11 @@ import { JoinedFolderRepository } from "../database/repository/joined-folder.rep
 import { Folder } from "../database/entity/folder.entity";
 import { JoinedFolderEntity } from "../database/entity/joined-folder.entity";
 import { User } from "../database/entity/user.entity";
-import { getRepository } from "typeorm";
 import { Code } from "../utils/Code";
 import { ResponseMessage } from "../utils/ResponseMessage";
-import {UserRepository} from "../database/repository/user.repository";
-import {generateRandomString} from "../utils/global";
+import { UserRepository } from "../database/repository/user.repository";
+import { generateRandomString } from "../utils/global";
+import {pleaseReload} from "../socket/pleaseReload";
 
 const folderRouter = express.Router();
 
@@ -21,7 +21,7 @@ const error = (message: string) => ({ error: message });
  * Créer un folder avec possibilité d'ajouter des amis par leur username.
  */
 folderRouter.post('/', apiTokenMiddleware, async (req, res) => {
-    /*
+    /**
         #swagger.tags = ['Folder']
         #swagger.path = '/folders'
         #swagger.method = 'post'
@@ -46,7 +46,7 @@ folderRouter.post('/', apiTokenMiddleware, async (req, res) => {
                 msg: 'Missing required fields'
             }
         }
-    */
+    **/
     try {
         const { name, friends } = req.body;
         if (!name) {
@@ -59,20 +59,15 @@ folderRouter.post('/', apiTokenMiddleware, async (req, res) => {
         newFolder.userID = user.id;
         newFolder.inviteToken = generateRandomString(10);
 
-        // Création du folder
         let savedFolder = await FolderRepository.save(newFolder);
 
-        // Traitement de l'ajout d'amis (optionnel)
         if (friends && Array.isArray(friends)) {
             for (const friendUsername of friends) {
-                // Rechercher l'utilisateur par son username
                 const friendUser = await UserRepository.findOne({ where: { username: friendUsername } });
                 if (!friendUser) {
                     return res.status(Code.NOT_FOUND).send(error(`Friend with username "${friendUsername}" not found`));
                 }
-                // On ne peut pas ajouter le propriétaire comme ami
                 if (friendUser.id === user.id) continue;
-                // Vérifier que l'utilisateur n'est pas déjà invité
                 const existingJoin = await JoinedFolderRepository.findOne({
                     where: { folder: { id: savedFolder.id }, user: { id: friendUser.id } }
                 });
@@ -101,6 +96,7 @@ folderRouter.post('/', apiTokenMiddleware, async (req, res) => {
             joinedUser: folderWithJoins.joinedUser?.map(j => j.user) || []
         };
 
+        pleaseReload([user.id, ...mappedFolder.joinedUser.map(u => u.id)], 'folder', 0);
         res.status(Code.CREATED).send(mappedFolder);
     } catch (e) {
         ErrorHandler(e, req, res);
@@ -111,7 +107,7 @@ folderRouter.post('/', apiTokenMiddleware, async (req, res) => {
  * Modifier un folder (propriétaire uniquement) avec possibilité d'ajouter des amis via leur username.
  */
 folderRouter.put('/:id', apiTokenMiddleware, async (req, res) => {
-    /*
+    /**
         #swagger.tags = ['Folder']
         #swagger.path = '/folders/{id}'
         #swagger.method = 'put'
@@ -155,10 +151,9 @@ folderRouter.put('/:id', apiTokenMiddleware, async (req, res) => {
         const { name, friends } = req.body;
         const user: User = res.locals.connectedUser;
 
-        // Charger le folder avec ses relations déjà présentes
         const folder = await FolderRepository.findOne({
             where: { id: Number(id) },
-            relations: ["joinedUser"]
+            relations: ["joinedUser", "joinedUser.user"]
         });
         if (!folder) {
             return res.status(Code.NOT_FOUND).send(error(ResponseMessage.FOLDER_NOT_FOUND));
@@ -171,17 +166,13 @@ folderRouter.put('/:id', apiTokenMiddleware, async (req, res) => {
             folder.name = name;
         }
 
-        // Traitement de l'ajout d'amis (optionnel)
         if (friends && Array.isArray(friends)) {
-            const userRepo = getRepository(User);
             for (const friendUsername of friends) {
-                const friendUser = await userRepo.findOne({ where: { username: friendUsername } });
+                const friendUser = await UserRepository.findOne({ where: { username: friendUsername } });
                 if (!friendUser) {
                     return res.status(Code.NOT_FOUND).send(error(`Friend with username "${friendUsername}" not found`));
                 }
-                // On ignore si c'est le propriétaire
                 if (friendUser.id === user.id) continue;
-                // Vérifier l'existence d'une invitation déjà présente
                 const existingJoin = await JoinedFolderRepository.findOne({
                     where: { folder: { id: folder.id }, user: { id: friendUser.id } }
                 });
@@ -198,7 +189,6 @@ folderRouter.put('/:id', apiTokenMiddleware, async (req, res) => {
 
         const updatedFolder = await FolderRepository.save(folder);
 
-        // Recharger le folder avec les relations pour remapper joinedUser
         const folderWithJoins = await FolderRepository.findOne({
             where: { id: updatedFolder.id },
             relations: ["joinedUser", "joinedUser.user"]
@@ -208,16 +198,15 @@ folderRouter.put('/:id', apiTokenMiddleware, async (req, res) => {
             joinedUser: folderWithJoins.joinedUser?.map(j => j.user) || []
         };
 
+        pleaseReload([user.id, ...mappedFolder.joinedUser.map(u => u.id)], 'folder', 0);
         res.status(Code.OK).send(mappedFolder);
     } catch (e) {
         ErrorHandler(e, req, res);
     }
 });
 
-// --- Les autres routes restent inchangées ---
-
 folderRouter.get('/', apiTokenMiddleware, async (req, res) => {
-    /*
+    /**
         #swagger.tags = ['Folder']
         #swagger.path = '/folders'
         #swagger.method = 'get'
@@ -233,7 +222,8 @@ folderRouter.get('/', apiTokenMiddleware, async (req, res) => {
         const user: User = res.locals.connectedUser;
 
         const folders = await FolderRepository.createQueryBuilder("folder")
-            .leftJoin("folder.joinedUser", "joined")
+            .leftJoinAndSelect("folder.joinedUser", "joined")
+            .leftJoinAndSelect("joined.user", "joinedUser")
             .where("folder.userID = :userId", { userId: user.id })
             .orWhere("joined.userID = :userId", { userId: user.id })
             .getMany();
@@ -250,7 +240,7 @@ folderRouter.get('/', apiTokenMiddleware, async (req, res) => {
 });
 
 folderRouter.delete('/:id', apiTokenMiddleware, async (req, res) => {
-    /*
+    /**
         #swagger.tags = ['Folder']
         #swagger.path = '/folders/{id}'
         #swagger.method = 'delete'
@@ -265,7 +255,7 @@ folderRouter.delete('/:id', apiTokenMiddleware, async (req, res) => {
             description: 'Folder deleted successfully.'
         }
         #swagger.responses[403] = {
-            description = 'Unauthorized to delete this folder.',
+            description: 'Unauthorized to delete this folder.',
             schema: {
                 status: 403,
                 msg: 'Vous n\'êtes pas autorisé à supprimer ce folder'
@@ -283,7 +273,10 @@ folderRouter.delete('/:id', apiTokenMiddleware, async (req, res) => {
         const { id } = req.params;
         const user: User = res.locals.connectedUser;
 
-        const folder = await FolderRepository.findOne({ where: { id: Number(id) } });
+        const folder = await FolderRepository.findOne({
+            where: { id: Number(id) },
+            relations: ["joinedUser", "joinedUser.user"]
+        });
         if (!folder) {
             return res.status(Code.NOT_FOUND).send(error(ResponseMessage.FOLDER_NOT_FOUND));
         }
@@ -291,7 +284,9 @@ folderRouter.delete('/:id', apiTokenMiddleware, async (req, res) => {
             return res.status(Code.FORBIDDEN).send(error(ResponseMessage.UNAUTHORIZED_DELETE_FOLDER));
         }
 
+        const reloadIds = [folder.userID, ...folder.joinedUser.map(j => j.user.id)];
         await FolderRepository.remove(folder);
+        pleaseReload(reloadIds, 'folder', 0);
         res.status(Code.NO_CONTENT).send();
     } catch (e) {
         ErrorHandler(e, req, res);
@@ -299,7 +294,7 @@ folderRouter.delete('/:id', apiTokenMiddleware, async (req, res) => {
 });
 
 folderRouter.post('/quit/:id', apiTokenMiddleware, async (req, res) => {
-    /*
+    /**
         #swagger.tags = ['Folder']
         #swagger.path = '/folders/quit/{id}'
         #swagger.method = 'post'
@@ -332,7 +327,10 @@ folderRouter.post('/quit/:id', apiTokenMiddleware, async (req, res) => {
         const { id } = req.params;
         const user: User = res.locals.connectedUser;
 
-        const folder = await FolderRepository.findOne({ where: { id: Number(id) } });
+        const folder = await FolderRepository.findOne({
+            where: { id: Number(id) },
+            relations: ["joinedUser", "joinedUser.user"]
+        });
         if (!folder) {
             return res.status(Code.NOT_FOUND).send(error(ResponseMessage.FOLDER_NOT_FOUND));
         }
@@ -348,6 +346,13 @@ folderRouter.post('/quit/:id', apiTokenMiddleware, async (req, res) => {
         }
 
         await JoinedFolderRepository.delete(joinedFolder);
+        const updatedFolder = await FolderRepository.findOne({
+            where: { id: Number(id) },
+            relations: ["joinedUser", "joinedUser.user"]
+        });
+        let reloadIds = [folder.userID, ...updatedFolder.joinedUser.map(j => j.user.id)];
+        if (!reloadIds.includes(user.id)) reloadIds.push(user.id);
+        pleaseReload(reloadIds, 'folder', 0);
         res.status(Code.NO_CONTENT).send();
     } catch (e) {
         ErrorHandler(e, req, res);
@@ -355,7 +360,7 @@ folderRouter.post('/quit/:id', apiTokenMiddleware, async (req, res) => {
 });
 
 folderRouter.post('/share/:id', apiTokenMiddleware, async (req, res) => {
-    /*
+    /**
         #swagger.tags = ['Folder']
         #swagger.path = '/folders/share/{id}'
         #swagger.method = 'post'
@@ -391,7 +396,10 @@ folderRouter.post('/share/:id', apiTokenMiddleware, async (req, res) => {
         const { id } = req.params;
         const user: User = res.locals.connectedUser;
 
-        const folder = await FolderRepository.findOne({ where: { id: Number(id) } });
+        const folder = await FolderRepository.findOne({
+            where: { id: Number(id) },
+            relations: ["joinedUser", "joinedUser.user"]
+        });
         if (!folder) {
             return res.status(Code.NOT_FOUND).send(error(ResponseMessage.FOLDER_NOT_FOUND));
         }
@@ -402,6 +410,12 @@ folderRouter.post('/share/:id', apiTokenMiddleware, async (req, res) => {
         folder.inviteToken = generateRandomString(10);
         await FolderRepository.save(folder);
 
+        const folderWithJoins = await FolderRepository.findOne({
+            where: { id: folder.id },
+            relations: ["joinedUser", "joinedUser.user"]
+        });
+        const reloadIds = [folder.userID, ...folderWithJoins.joinedUser.map(j => j.user.id)];
+        pleaseReload(reloadIds, 'folder', 0);
         res.status(Code.OK).send({ inviteToken: folder.inviteToken });
     } catch (e) {
         ErrorHandler(e, req, res);
@@ -409,7 +423,7 @@ folderRouter.post('/share/:id', apiTokenMiddleware, async (req, res) => {
 });
 
 folderRouter.post('/join', apiTokenMiddleware, async (req, res) => {
-    /*
+    /**
         #swagger.tags = ['Folder']
         #swagger.path = '/folders/join'
         #swagger.method = 'post'
@@ -450,7 +464,10 @@ folderRouter.post('/join', apiTokenMiddleware, async (req, res) => {
         }
         const user: User = res.locals.connectedUser;
 
-        const folder = await FolderRepository.findOne({ where: { inviteToken } });
+        const folder = await FolderRepository.findOne({
+            where: { inviteToken },
+            relations: ["joinedUser", "joinedUser.user"]
+        });
         if (!folder) {
             return res.status(Code.NOT_FOUND).send(error(ResponseMessage.FOLDER_NOT_FOUND_FOR_TOKEN));
         }
@@ -472,6 +489,12 @@ folderRouter.post('/join', apiTokenMiddleware, async (req, res) => {
         join.joinDate = new Date();
 
         await JoinedFolderRepository.save(join);
+        const updatedFolder = await FolderRepository.findOne({
+            where: { id: folder.id },
+            relations: ["joinedUser", "joinedUser.user"]
+        });
+        const reloadIds = [folder.userID, ...updatedFolder.joinedUser.map(j => j.user.id)];
+        pleaseReload(reloadIds, 'folder', 0);
         res.status(Code.OK).send({ message: 'Folder rejoint avec succès' });
     } catch (e) {
         ErrorHandler(e, req, res);

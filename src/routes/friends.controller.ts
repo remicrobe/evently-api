@@ -14,11 +14,12 @@ import {apiTokenMiddleware} from "../middlewares/checkApiToken";
 const friendsRouter = express.Router();
 
 friendsRouter.post('/', apiTokenMiddleware, async (req, res) => {
-    /*  #swagger.tags = ['Friends']
+    /**
+        #swagger.tags = ['Friends']
         #swagger.path = '/friends-request/'
         #swagger.method = 'post'
         #swagger.description = 'Send a friend request to a user.'
-       #swagger.parameters['body'] = {
+        #swagger.parameters['body'] = {
             in: 'body',
             description: 'Username of the friends',
             required: true,
@@ -73,16 +74,18 @@ friendsRouter.post('/', apiTokenMiddleware, async (req, res) => {
     }
 });
 
-friendsRouter.delete('/:username', apiTokenMiddleware, async (req, res) => {
-    /*  #swagger.tags = ['Friends']
+friendsRouter.delete('/', apiTokenMiddleware, async (req, res) => {
+    /** #swagger.tags = ['Friends']
         #swagger.path = '/friends-request/{username}'
         #swagger.method = 'delete'
         #swagger.description = 'Remove a friend.'
-        #swagger.parameters['username'] = {
-            in: 'path',
-            description: 'Username of the user',
+        #swagger.parameters['body'] = {
+            in: 'body',
+            description: 'Username of the friends',
             required: true,
-            example: 'johndoe'
+            schema: {
+                field: 'azeraze#12345'
+            }
         }
         #swagger.responses[200] = {
             description: 'Friend removed successfully.',
@@ -98,7 +101,7 @@ friendsRouter.delete('/:username', apiTokenMiddleware, async (req, res) => {
         }
     */
     try {
-        let username = req.params.username;
+        let username = req.body.field;
         let user: User = res.locals.connectedUser;
 
         let userRequested = await UserRepository.findOneByOrFail({

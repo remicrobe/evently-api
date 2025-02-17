@@ -14,7 +14,7 @@ import {FriendsRepository} from "../database/repository/friends.repository";
 const userRouter = express.Router();
 
 userRouter.get('/friends', apiTokenMiddleware, async (req, res) => {
-    /*  #swagger.tags = ['User']
+    /** #swagger.tags = ['User']
         #swagger.path = '/user/friends'
         #swagger.description = 'Get user friends.'
         #swagger.responses[200] = {
@@ -43,7 +43,7 @@ userRouter.get('/friends', apiTokenMiddleware, async (req, res) => {
 });
 
 userRouter.get('/me', apiTokenMiddleware, async (req, res) => {
-    /*  #swagger.tags = ['User']
+    /** #swagger.tags = ['User']
         #swagger.path = '/user/me'
         #swagger.method = 'get'
         #swagger.description = 'Get all information of the connected user.'
@@ -72,7 +72,7 @@ userRouter.get('/me', apiTokenMiddleware, async (req, res) => {
 });
 
 userRouter.delete('/', apiTokenMiddleware, async (req, res) => {
-    /*  #swagger.tags = ['User']
+    /** #swagger.tags = ['User']
         #swagger.path = '/user/'
         #swagger.method = 'delete'
         #swagger.description = 'Delete an User.'
@@ -107,7 +107,7 @@ userRouter.delete('/', apiTokenMiddleware, async (req, res) => {
 });
 
 userRouter.post('/register', rateLimiterMiddleware(60 * 15, 5), async (req, res) => {
-    /*  #swagger.tags = ['User']
+    /** #swagger.tags = ['User']
         #swagger.path = '/user/register'
         #swagger.description = 'Register a new user.'
         #swagger.parameters['body'] = {
@@ -140,6 +140,7 @@ userRouter.post('/register', rateLimiterMiddleware(60 * 15, 5), async (req, res)
         )
 
         user.username = `${firstName}${lastName}`.toLowerCase() + '#' + Math.floor(1000 + Math.random() * 9000);
+        user.username = user.username.normalize("NFD").replace(/[\u0300-\u036f]/g, "")
         user.firstName = firstName;
         user.lastName = lastName;
 
@@ -278,7 +279,7 @@ userRouter.post('/login', async (req, res) => {
 });
 
 userRouter.get('/refresh-token/:refreshToken', async (req, res) => {
-    /*  #swagger.tags = ['User']
+    /** #swagger.tags = ['User']
         #swagger.description = 'Refresh user token.'
         #swagger.path = '/user/refresh-token/{refreshToken}'
         #swagger.parameters['refreshToken'] = {

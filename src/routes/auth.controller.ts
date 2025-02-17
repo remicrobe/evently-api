@@ -298,6 +298,7 @@ authRouter.post('/from-provider/step-two', apiTokenMiddleware, async (req, res) 
         }
 
         user.username = `${firstname}${lastname}`.toLowerCase() + '#' + Math.floor(1000 + Math.random() * 9000);
+        user.username = user.username.normalize("NFD").replace(/[\u0300-\u036f]/g, "")
         user.firstName = firstname;
         user.lastName = lastname;
         user.isCompleted = true;

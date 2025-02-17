@@ -1,4 +1,3 @@
-// Define the recurrence pattern enum
 export enum RecurrencePattern {
     Monthly = "monthly",
     Yearly = "yearly",
@@ -33,7 +32,7 @@ export class Event {
     @Column({ nullable: true })
     location: string;
 
-    @Column({})
+    @Column({ default: false })
     childCreated: boolean;
 
     @Column({

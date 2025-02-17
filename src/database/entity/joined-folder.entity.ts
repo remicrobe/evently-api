@@ -2,7 +2,7 @@ import {Column, DeleteDateColumn, Entity, JoinColumn, ManyToOne, PrimaryGenerate
 import {User} from "./user.entity";
 import {Folder} from "./folder.entity";
 
-@Entity()
+@Entity({ synchronize: false })
 export class JoinedFolderEntity {
     @PrimaryGeneratedColumn({})
     id: number;

@@ -18,17 +18,17 @@ categoryRouter.post('/', apiTokenMiddleware, async (req, res) => {
      #swagger.path = '/categories'
      #swagger.description = 'Create a new category'
      #swagger.parameters['body'] = {
-     in: 'body',
-     description: 'Category details',
-     required: true,
-     schema: {
-     name: "Example",
-     icon: "icon",
-     color: "#FFFFFF"
-     }
+         in: 'body',
+         description: 'Category details',
+         required: true,
+         schema: {
+             name: "Example",
+             icon: "icon",
+             color: "#FFFFFF"
+         }
      }
      #swagger.responses[200] = {
-     schema: { $ref: '#/definitions/Category' }
+        schema: { $ref: '#/definitions/Category' }
      }
      */
     try {
@@ -58,7 +58,7 @@ categoryRouter.get('/', apiTokenMiddleware, async (req, res) => {
      #swagger.path = '/categories'
      #swagger.description = 'Get user categories'
      #swagger.responses[200] = {
-     schema: { $ref: '#/definitions/Category' }
+        schema: { $ref: '#/definitions/Category' }
      }
      */
     try {
@@ -78,7 +78,7 @@ categoryRouter.get('/default', apiTokenMiddleware, async (req, res) => {
      #swagger.path = '/categories/default'
      #swagger.description = 'Get default categories'
      #swagger.responses[200] = {
-     schema: { $ref: '#/definitions/Category' }
+        schema: { $ref: '#/definitions/Category' }
      }
      */
     try {
@@ -98,11 +98,11 @@ categoryRouter.put('/:id', apiTokenMiddleware, async (req, res) => {
      #swagger.description = 'Update category'
      #swagger.parameters['body'] = {
      in: 'body',
-     schema: {
-     name: "Updated name",
-     icon: "updated-icon",
-     color: "#000000"
-     }
+         schema: {
+         name: "Updated name",
+         icon: "updated-icon",
+         color: "#000000"
+         }
      }
      */
     try {
