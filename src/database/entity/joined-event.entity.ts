@@ -1,7 +1,6 @@
 import {Entity, PrimaryGeneratedColumn, Column, DeleteDateColumn, ManyToOne, JoinColumn} from "typeorm";
 import { Event } from "./event.entity";
 import { User } from "./user.entity";
-import {Category} from "./category.entity";
 
 export enum InvitationStatus {
     INVITED = "invited",

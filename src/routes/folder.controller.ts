@@ -12,6 +12,7 @@ import { ResponseMessage } from "../utils/ResponseMessage";
 import { UserRepository } from "../database/repository/user.repository";
 import { generateRandomString } from "../utils/global";
 import {pleaseReload} from "../socket/pleaseReload";
+import { Equal, In, Not } from "typeorm";
 
 const folderRouter = express.Router();
 
@@ -166,7 +167,18 @@ folderRouter.put('/:id', apiTokenMiddleware, async (req, res) => {
             folder.name = name;
         }
 
+        const updatedFolder = await FolderRepository.save(folder);
+
         if (friends && Array.isArray(friends)) {
+            const jfToDelete = await JoinedFolderRepository.findBy({
+                user: {
+                    username: Not(In(friends))
+                },
+                folderId: folder.id
+            });
+
+            await JoinedFolderRepository.remove(jfToDelete);
+
             for (const friendUsername of friends) {
                 const friendUser = await UserRepository.findOne({ where: { username: friendUsername } });
                 if (!friendUser) {
@@ -185,14 +197,21 @@ folderRouter.put('/:id', apiTokenMiddleware, async (req, res) => {
                     await JoinedFolderRepository.save(join);
                 }
             }
+        } else {
+            await JoinedFolderRepository.delete({
+                folderId: Equal(folder.id)
+            })
         }
-
-        const updatedFolder = await FolderRepository.save(folder);
 
         const folderWithJoins = await FolderRepository.findOne({
             where: { id: updatedFolder.id },
-            relations: ["joinedUser", "joinedUser.user"]
+            relations: {
+                joinedUser: {
+                    user: true
+                }
+            }
         });
+
         const mappedFolder = {
             ...folderWithJoins,
             joinedUser: folderWithJoins.joinedUser?.map(j => j.user) || []

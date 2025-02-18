@@ -3,7 +3,7 @@ import { ErrorHandler } from "../utils/error/error-handler";
 import { EventRepository } from "../database/repository/event.repository";
 import { apiTokenMiddleware } from "../middlewares/checkApiToken";
 import { User } from "../database/entity/user.entity";
-import { Equal, In } from "typeorm";
+import { Equal, In, Not } from "typeorm";
 import { Event } from "../database/entity/event.entity";
 import { CategoryRepository } from "../database/repository/category.repository";
 import { FolderRepository } from "../database/repository/folder.repository";
@@ -13,7 +13,7 @@ import { Code } from "../utils/Code";
 import { ResponseMessage } from "../utils/ResponseMessage";
 import { UserRepository } from "../database/repository/user.repository";
 import { generateRandomString } from "../utils/global";
-import {pleaseReload} from "../socket/pleaseReload";
+import { pleaseReload } from "../socket/pleaseReload";
 
 const eventRouter = express.Router();
 const error = (message: string) => ({ error: message });
@@ -113,7 +113,12 @@ eventRouter.post('/', apiTokenMiddleware, async (req, res) => {
             joinedUser: eventWithJoins.joinedUser?.map(j => j.user) || []
         };
 
-        pleaseReload([mappedEvent.user.id, ...mappedEvent.joinedUser.map(u => u.id)], 'event', mappedEvent.id);
+        const pendingUser = eventWithJoins.joinedUser.filter(join => join.invitationStatus === InvitationStatus.INVITED);
+        const acceptedUser = eventWithJoins.joinedUser.filter(join => join.invitationStatus === InvitationStatus.ACCEPTED);
+
+        pleaseReload(acceptedUser.map(j => j.user.id), 'event', eventWithJoins.id);
+        pleaseReload(pendingUser.map(j => j.user.id), 'event-invite', eventWithJoins.id);
+
         res.status(Code.CREATED).send(mappedEvent);
     } catch (e) {
         ErrorHandler(e, req, res);
@@ -143,7 +148,7 @@ eventRouter.put('/:id', apiTokenMiddleware, async (req, res) => {
      **/
     try {
         const { id } = req.params;
-        const { name, description, recurrencePattern, interval, targetDate, categoryID, friends } = req.body;
+        const { name, description, recurrencePattern, interval, targetDate, categoryID, friends, folderID } = req.body;
         const user: User = res.locals.connectedUser;
 
         const event = await EventRepository.findOne({
@@ -160,6 +165,20 @@ eventRouter.put('/:id', apiTokenMiddleware, async (req, res) => {
         if (interval !== undefined) event.interval = interval;
         if (targetDate !== undefined) event.targetDate = new Date(targetDate);
 
+        if (folderID) {
+            const folder = await FolderRepository.findOneOrFail({
+                where: { id: folderID },
+                relations: { joinedUser: true }
+            });
+            if (folder.userID !== user.id && !folder.joinedUser.some(inv => inv.userID === user.id)) {
+                return res.status(Code.FORBIDDEN).send(error(ResponseMessage.UNAUTHORIZED_FOLDER_ASSIGNMENT));
+            }
+            event.folder = folder;
+        } else {
+            event.folder = null;
+            event.folderID = null;
+        }
+
         if (categoryID !== undefined) {
             const category = await CategoryRepository.findOne({ where: { id: categoryID } });
             if (!category) {
@@ -168,7 +187,18 @@ eventRouter.put('/:id', apiTokenMiddleware, async (req, res) => {
             event.category = category;
         }
 
+        const updatedEvent = await EventRepository.save(event);
+
         if (friends && Array.isArray(friends)) {
+            const jeToDelete = await JoinedEventRepository.findBy({
+                user: {
+                    username: Not(In(friends))
+                },
+                eventId: event.id
+            });
+
+            await JoinedEventRepository.remove(jeToDelete);
+
             for (const friendUsername of friends) {
                 const friendUser = await UserRepository.findOne({ where: { username: friendUsername } });
                 if (!friendUser) {
@@ -183,60 +213,37 @@ eventRouter.put('/:id', apiTokenMiddleware, async (req, res) => {
                     join.eventId = event.id;
                     join.user = friendUser;
                     join.joinDate = new Date();
-                    await JoinedEventRepository.save(join);
+                    await JoinedEventRepository.insert(join);
                 }
             }
+        } else {
+            await JoinedEventRepository.delete({
+                eventId: Equal(event.id)
+            })
         }
 
-        const updatedEvent = await EventRepository.save(event);
         const eventWithJoins = await EventRepository.findOne({
             where: { id: updatedEvent.id },
-            relations: ["user", "joinedUser", "joinedUser.user"]
+            relations: {
+                user: true,
+                joinedUser: {
+                    user: true
+                }
+            }
         });
+
         const mappedEvent = {
             ...eventWithJoins,
             joinedUser: eventWithJoins.joinedUser?.map(j => j.user) || []
         };
 
-        pleaseReload([eventWithJoins.user.id, ...mappedEvent.joinedUser.map(u => u.id)], 'event', mappedEvent.id);
+        const pendingUser = updatedEvent.joinedUser.filter(join => join.invitationStatus === InvitationStatus.INVITED);
+        const acceptedUser = updatedEvent.joinedUser.filter(join => join.invitationStatus === InvitationStatus.ACCEPTED);
+
+        pleaseReload(acceptedUser.map(j => j.user.id), 'event', updatedEvent.id);
+        pleaseReload(pendingUser.map(j => j.user.id), 'event-invite', updatedEvent.id);
+
         res.status(Code.OK).send(mappedEvent);
-    } catch (e) {
-        ErrorHandler(e, req, res);
-    }
-});
-
-/**
- * Get user events
- */
-eventRouter.get('/', apiTokenMiddleware, async (req, res) => {
-    /**
-     #swagger.tags = ['Event']
-     #swagger.path = '/events'
-     #swagger.description = 'Get user events'
-     **/
-    try {
-        const user: User = res.locals.connectedUser;
-
-        const events = await EventRepository.createQueryBuilder("event")
-            .leftJoinAndSelect("event.joinedUser", "joinedUser")
-            .leftJoinAndSelect("event.user", "creator")
-            .leftJoinAndSelect("joinedUser.user", "joinedUserUser")
-            .leftJoinAndSelect("event.category", "category")
-            .leftJoinAndSelect("event.folder", "folder")
-            .leftJoinAndSelect("folder.joinedUser", "folderJoinedUser")
-            .where("event.userID = :userId", { userId: user.id })
-            .orWhere("joinedUserUser.id = :userId AND joinedUser.invitationStatus = :accepted", { userId: user.id, accepted: InvitationStatus.ACCEPTED })
-            .orWhere("folder.userID = :userId", { userId: user.id })
-            .orWhere("folderJoinedUser.userID = :userId", { userId: user.id })
-            .orderBy('event.targetDate', 'ASC')
-            .getMany();
-
-        const eventsWithMappedUsers = events.map(event => ({
-            ...event,
-            joinedUser: event.joinedUser?.map(j => j.user) || []
-        }));
-
-        res.status(Code.OK).send(eventsWithMappedUsers);
     } catch (e) {
         ErrorHandler(e, req, res);
     }
@@ -368,8 +375,13 @@ eventRouter.post('/join', apiTokenMiddleware, async (req, res) => {
             where: { id: event.id },
             relations: ["user", "joinedUser", "joinedUser.user"]
         });
-        const reloadIds = [updatedEvent.user.id, ...updatedEvent.joinedUser.map(j => j.user.id)];
+
+        const pendingUser = updatedEvent.joinedUser.filter(join => join.invitationStatus === InvitationStatus.INVITED);
+        const acceptedUser = updatedEvent.joinedUser.filter(join => join.invitationStatus === InvitationStatus.ACCEPTED);
+
+        const reloadIds = [updatedEvent.user.id, ...acceptedUser.map(j => j.user.id)];
         pleaseReload(reloadIds, 'event', updatedEvent.id);
+        pleaseReload(pendingUser.map(j => j.user.id), 'event-invite', updatedEvent.id);
         res.status(Code.OK).send({ message: 'Event rejoint avec succès' });
     } catch (e) {
         ErrorHandler(e, req, res);
@@ -430,9 +442,14 @@ eventRouter.post('/leave/:id', apiTokenMiddleware, async (req, res) => {
             where: { id: event.id },
             relations: ["user", "joinedUser", "joinedUser.user"]
         });
-        let reloadIds = [updatedEvent.user.id, ...updatedEvent.joinedUser.map(j => j.user.id)];
-        if (!reloadIds.includes(user.id)) reloadIds.push(user.id);
-        pleaseReload(reloadIds, 'event', event.id);
+
+        const pendingUser = updatedEvent.joinedUser.filter(join => join.invitationStatus === InvitationStatus.INVITED);
+        const acceptedUser = updatedEvent.joinedUser.filter(join => join.invitationStatus === InvitationStatus.ACCEPTED);
+
+        const reloadIds = [updatedEvent.user.id, ...acceptedUser.map(j => j.user.id)];
+        pleaseReload(reloadIds, 'event', updatedEvent.id);
+        pleaseReload(pendingUser.map(j => j.user.id), 'event-invite', updatedEvent.id);
+
         res.status(Code.NO_CONTENT).send();
     } catch (e) {
         ErrorHandler(e, req, res);
@@ -533,6 +550,53 @@ eventRouter.put('/invitation/:eventId', apiTokenMiddleware, async (req, res) => 
                 }
             });
         }
+    } catch (e) {
+        ErrorHandler(e, req, res);
+    }
+});
+
+/**
+ * Get user events
+ */
+eventRouter.get('/:id?', apiTokenMiddleware, async (req, res) => {
+    /**
+     #swagger.tags = ['Event']
+     #swagger.path = '/events/{id}'
+     #swagger.description = 'Get user events or a specific event when if is req'
+     **/
+    try {
+        const user: User = res.locals.connectedUser;
+        const id = req.params.id;
+
+        const query = EventRepository.createQueryBuilder("event")
+            .leftJoinAndSelect("event.joinedUser", "joinedUser")
+            .leftJoinAndSelect("event.user", "creator")
+            .leftJoinAndSelect("joinedUser.user", "joinedUserUser")
+            .leftJoinAndSelect("event.category", "category")
+            .leftJoinAndSelect("event.folder", "folder")
+            .leftJoinAndSelect("folder.joinedUser", "folderJoinedUser")
+            .where("event.userID = :userId", { userId: user.id })
+            .orWhere("joinedUserUser.id = :userId AND joinedUser.invitationStatus = :accepted", { userId: user.id, accepted: InvitationStatus.ACCEPTED })
+            .orWhere("folder.userID = :userId", { userId: user.id })
+            .orWhere("folderJoinedUser.userID = :userId", { userId: user.id })
+            .orderBy('event.targetDate', 'ASC')
+
+        if (id) {
+            query.andWhere('event.id = :id', { id })
+        }
+
+        const events = await query.getMany();
+
+        const eventsWithMappedUsers = events.map(event => ({
+            ...event,
+            joinedUser: event.joinedUser?.map(j => j.user) || []
+        }));
+
+        res.status (Code.OK).send (
+            id
+                ? eventsWithMappedUsers[ 0 ]
+                : eventsWithMappedUsers
+        );
     } catch (e) {
         ErrorHandler(e, req, res);
     }

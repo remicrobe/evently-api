@@ -26,7 +26,7 @@ export class Event {
     @Column({})
     name: string;
 
-    @Column({ nullable: true })
+    @Column({ nullable: true, length: 1000 })
     description: string;
 
     @Column({ nullable: true })

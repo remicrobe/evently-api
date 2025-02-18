@@ -2,7 +2,7 @@ import {Index} from "../index";
 
 export function pleaseReload(
     userId: number | number[],
-    context: 'friend' | 'friendRequest' | 'event' | 'folder',
+    context: 'friend' | 'friendRequest' | 'event' | 'folder' | 'event-invite',
     id: number,
     mainId: number = 0
 ) {
