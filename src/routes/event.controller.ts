@@ -180,7 +180,7 @@ eventRouter.put('/:id', apiTokenMiddleware, async (req, res) => {
                 });
                 if (!existingJoin) {
                     const join = new JoinedEventEntity();
-                    join.event = event;
+                    join.eventId = event.id;
                     join.user = friendUser;
                     join.joinDate = new Date();
                     await JoinedEventRepository.save(join);

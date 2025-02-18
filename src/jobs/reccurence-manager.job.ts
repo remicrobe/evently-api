@@ -33,6 +33,7 @@ export async function reccurenceManagerJob() {
         };
 
         delete newEventData.id;
+        delete newEventData.inviteToken;
 
         const newEvent = EventRepository.create(newEventData);
         await EventRepository.save(newEvent);

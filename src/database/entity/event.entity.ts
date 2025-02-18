@@ -51,14 +51,14 @@ export class Event {
     @Column({ nullable: true })
     targetDate: Date;
 
-    @Column({ unique: true })
+    @Column({ unique: true, nullable: true, default: null })
     inviteToken: string;
 
     @ManyToOne(() => Category)
     @JoinColumn({ name: 'categoryID' })
     category: Category;
 
-    @Column({ nullable: true })
+    @Column({ nullable: false })
     categoryID: number;
 
     @ManyToOne(() => User, user => user.events)

@@ -1,6 +1,7 @@
-import { Entity, PrimaryGeneratedColumn, Column, DeleteDateColumn, ManyToOne } from "typeorm";
+import {Entity, PrimaryGeneratedColumn, Column, DeleteDateColumn, ManyToOne, JoinColumn} from "typeorm";
 import { Event } from "./event.entity";
 import { User } from "./user.entity";
+import {Category} from "./category.entity";
 
 export enum InvitationStatus {
     INVITED = "invited",
@@ -14,7 +15,11 @@ export class JoinedEventEntity {
     id: number;
 
     @ManyToOne(() => Event, event => event.joinedUser)
+    @JoinColumn({ name: 'eventId' })
     event: Event;
+
+    @Column({ nullable: true })
+    eventId: number;
 
     @ManyToOne(() => User, user => user.joinedEvents)
     user: User;
