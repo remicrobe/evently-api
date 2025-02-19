@@ -3,7 +3,7 @@ import { ErrorHandler } from "../utils/error/error-handler";
 import { EventRepository } from "../database/repository/event.repository";
 import { apiTokenMiddleware } from "../middlewares/checkApiToken";
 import { User } from "../database/entity/user.entity";
-import { Equal, In, Not } from "typeorm";
+import {Brackets, Equal, In, Not} from "typeorm";
 import { Event } from "../database/entity/event.entity";
 import { CategoryRepository } from "../database/repository/category.repository";
 import { FolderRepository } from "../database/repository/folder.repository";
@@ -552,11 +552,14 @@ eventRouter.get('/:id?', apiTokenMiddleware, async (req, res) => {
             .leftJoinAndSelect("event.category", "category")
             .leftJoinAndSelect("event.folder", "folder")
             .leftJoinAndSelect("folder.joinedUser", "folderJoinedUser")
-            .where("event.userID = :userId", { userId: user.id })
-            .orWhere("joinedUserUser.id = :userId AND joinedUser.invitationStatus = :accepted", { userId: user.id, accepted: InvitationStatus.ACCEPTED })
-            .orWhere("folder.userID = :userId", { userId: user.id })
-            .orWhere("folderJoinedUser.userID = :userId", { userId: user.id })
             .orderBy('event.targetDate', 'ASC')
+
+        query.where(new Brackets(qb => {
+                qb.where("event.userID = :userId", { userId: user.id })
+                .orWhere("joinedUserUser.id = :userId AND joinedUser.invitationStatus = :accepted", { userId: user.id, accepted: InvitationStatus.ACCEPTED })
+                .orWhere("folder.userID = :userId", { userId: user.id })
+                .orWhere("folderJoinedUser.userID = :userId", { userId: user.id })
+        }))
 
         if (id) {
             query.andWhere('event.id = :id', { id })

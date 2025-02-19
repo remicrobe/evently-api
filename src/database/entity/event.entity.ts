@@ -76,7 +76,7 @@ export class Event {
     folderID: number;
 
     @OneToMany(() => JoinedEventEntity, jev => jev.event, {
-        cascade: true
+        cascade: ['remove', 'soft-remove']
     })
     joinedUser: JoinedEventEntity[];
 
