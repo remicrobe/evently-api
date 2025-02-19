@@ -7,6 +7,10 @@ export function pleaseReload(
     mainId: number = 0
 ) {
     try {
+        if (!userId || (Array.isArray(userId) && userId?.length === 0)) {
+            return;
+        }
+
         let formattedUser: string | string[] = [];
 
         if (Array.isArray(userId)) {
@@ -14,6 +18,9 @@ export function pleaseReload(
         } else {
             formattedUser = userId.toString();
         }
+
+        // @TODO 19/02/2025: Remove when ready
+        console.log(`Send ${context} to ${formattedUser}`)
 
         Index.io.to(formattedUser).emit('update', {
             context,
