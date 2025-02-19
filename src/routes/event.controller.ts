@@ -228,7 +228,9 @@ eventRouter.put('/:id', apiTokenMiddleware, async (req, res) => {
                 user: true,
                 joinedUser: {
                     user: true
-                }
+                },
+                category: true,
+                folder: true
             }
         });
 
@@ -269,41 +271,16 @@ eventRouter.delete('/:id', apiTokenMiddleware, async (req, res) => {
         if (!event) {
             return res.status(Code.NOT_FOUND).send(error(ResponseMessage.EVENT_NOT_FOUND));
         }
-        const reloadIds = [event.user.id, ...event.joinedUser.map(j => j.user.id)];
+
+        const pendingUser = event.joinedUser.filter(join => join.invitationStatus === InvitationStatus.INVITED);
+        const acceptedUser = event.joinedUser.filter(join => join.invitationStatus === InvitationStatus.ACCEPTED);
+
         await EventRepository.remove(event);
-        pleaseReload(reloadIds, 'event', 0);
+
+        pleaseReload(acceptedUser.map(j => j.user.id), 'event', event.id, 'delete');
+        pleaseReload(pendingUser.map(j => j.user.id), 'event-invite', event.id, 'delete');
+
         res.status(Code.NO_CONTENT).send();
-    } catch (e) {
-        ErrorHandler(e, req, res);
-    }
-});
-
-/**
- * Generate an invite token for an event (only for the event creator)
- */
-eventRouter.post('/share/:id', apiTokenMiddleware, async (req, res) => {
-    /**
-     #swagger.tags = ['Event']
-     #swagger.path = '/events/share/{id}'
-     #swagger.description = 'Generate an invite token for an event (only for the event creator)'
-     **/
-    try {
-        const { id } = req.params;
-        const user: User = res.locals.connectedUser;
-
-        const event = await EventRepository.findOne({
-            where: { id: Number(id), user: { id: Equal(user.id) } },
-            relations: ["user", "joinedUser", "joinedUser.user"]
-        });
-        if (!event) {
-            return res.status(Code.NOT_FOUND).send(error(ResponseMessage.EVENT_NOT_FOUND_OR_NOT_OWNER));
-        }
-
-        event.inviteToken = generateRandomString(10);
-        await EventRepository.save(event);
-
-        pleaseReload([event.user.id, ...event.joinedUser.map(j => j.user.id)], 'event', 0);
-        res.status(Code.OK).send({ inviteToken: event.inviteToken });
     } catch (e) {
         ErrorHandler(e, req, res);
     }
