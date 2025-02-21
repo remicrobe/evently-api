@@ -341,7 +341,14 @@ eventRouter.post('/join', apiTokenMiddleware, async (req, res) => {
         await JoinedEventRepository.save(join);
         const updatedEvent = await EventRepository.findOne({
             where: { id: event.id },
-            relations: ["user", "joinedUser", "joinedUser.user"]
+            relations: {
+                user: true,
+                joinedUser: {
+                    user: true
+                },
+                folder: true,
+                category: true
+            }
         });
 
         const pendingUser = updatedEvent.joinedUser.filter(join => join.invitationStatus === InvitationStatus.INVITED);
@@ -350,7 +357,8 @@ eventRouter.post('/join', apiTokenMiddleware, async (req, res) => {
         const reloadIds = [updatedEvent.user.id, ...acceptedUser.map(j => j.user.id)];
         pleaseReload(reloadIds, 'event', updatedEvent.id);
         pleaseReload(pendingUser.map(j => j.user.id), 'event-invite', updatedEvent.id);
-        res.status(Code.OK).send({ message: 'Event rejoint avec succès' });
+
+        res.status(Code.OK).send(updatedEvent);
     } catch (e) {
         ErrorHandler(e, req, res);
     }
