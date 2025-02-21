@@ -108,18 +108,14 @@ eventRouter.post('/', apiTokenMiddleware, async (req, res) => {
                 folder: true
             }
         });
-        const mappedEvent = {
-            ...eventWithJoins,
-            joinedUser: eventWithJoins.joinedUser?.map(j => j.user) || []
-        };
-
+        
         const pendingUser = eventWithJoins.joinedUser.filter(join => join.invitationStatus === InvitationStatus.INVITED);
         const acceptedUser = eventWithJoins.joinedUser.filter(join => join.invitationStatus === InvitationStatus.ACCEPTED);
 
         pleaseReload(acceptedUser.map(j => j.user.id), 'event', eventWithJoins.id);
         pleaseReload(pendingUser.map(j => j.user.id), 'event-invite', eventWithJoins.id);
 
-        res.status(Code.CREATED).send(mappedEvent);
+        res.status(Code.CREATED).send(eventWithJoins);
     } catch (e) {
         ErrorHandler(e, req, res);
     }
@@ -234,18 +230,13 @@ eventRouter.put('/:id', apiTokenMiddleware, async (req, res) => {
             }
         });
 
-        const mappedEvent = {
-            ...eventWithJoins,
-            joinedUser: eventWithJoins.joinedUser?.map(j => j.user) || []
-        };
-
         const pendingUser = updatedEvent.joinedUser.filter(join => join.invitationStatus === InvitationStatus.INVITED);
         const acceptedUser = updatedEvent.joinedUser.filter(join => join.invitationStatus === InvitationStatus.ACCEPTED);
 
         pleaseReload(acceptedUser.map(j => j.user.id), 'event', updatedEvent.id);
         pleaseReload(pendingUser.map(j => j.user.id), 'event-invite', updatedEvent.id);
 
-        res.status(Code.OK).send(mappedEvent);
+        res.status(Code.OK).send(eventWithJoins);
     } catch (e) {
         ErrorHandler(e, req, res);
     }
