@@ -520,11 +520,7 @@ eventRouter.put('/invitation/:eventId', apiTokenMiddleware, async (req, res) => 
             pleaseReload([joinRecord.event.user.id], 'event', joinRecord.event.id);
 
             return res.status(Code.OK).send({
-                ...joinRecord,
-                event: {
-                    ...joinRecord.event,
-                    joinedUser: joinRecord.event?.joinedUser?.map(j => j.user) || []
-                }
+                joinRecord
             });
         }
     } catch (e) {
@@ -567,15 +563,10 @@ eventRouter.get('/:id?', apiTokenMiddleware, async (req, res) => {
 
         const events = await query.getMany();
 
-        const eventsWithMappedUsers = events.map(event => ({
-            ...event,
-            joinedUser: event.joinedUser?.map(j => j.user) || []
-        }));
-
         res.status (Code.OK).send (
             id
-                ? eventsWithMappedUsers[ 0 ]
-                : eventsWithMappedUsers
+                ? events[ 0 ]
+                : events
         );
     } catch (e) {
         ErrorHandler(e, req, res);
