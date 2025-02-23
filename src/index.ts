@@ -10,6 +10,7 @@ import * as swaggerJsonFile from "./docs/swagger_output.json"
 import * as basicAuth from 'express-basic-auth'
 import * as bodyParser from "body-parser"
 import * as swStats from "swagger-stats";
+import * as apn from "node-apn";
 import {initSocket} from "./socket/initSocket";
 import {authRouter} from "./routes/auth.controller";
 import {userRouter} from "./routes/user.controller";
@@ -18,10 +19,13 @@ import {categoryRouter} from "./routes/category.controller";
 import {eventRouter} from "./routes/event.controller";
 import {folderRouter} from "./routes/folder.controller";
 import {initJobs} from "./jobs/manager.job";
+import {notificationsRouter} from "./routes/notifications.controller";
+import {Provider} from "node-apn";
 
 export class Index {
     static jwtKey = process.env.JWT_SECRET;
-    static app = express()
+    static app = express();
+    static apns: Provider;
     static router = express.Router()
     static server = http.createServer(Index.app); // Créez un serveur HTTP à partir de votre application Express
     static io = new Server(Index.server, {cors: {origin: '*'}}); // Créez une instance de Socket.IO attachée à votre serveur HTTP
@@ -41,6 +45,7 @@ export class Index {
         Index.app.use('/categories', categoryRouter)
         Index.app.use('/events', eventRouter)
         Index.app.use('/folders', folderRouter)
+        Index.app.use('/notifications', notificationsRouter)
     }
 
     static swaggerConfig() {
@@ -62,6 +67,7 @@ export class Index {
             }
         }))
     }
+
     static imageFolder() {
         if (process.env.STORAGE_FOLDER) {
             Index.app.use("/image", express.static(process.env.STORAGE_FOLDER));
@@ -78,6 +84,17 @@ export class Index {
 
     static socketConfig() {
         initSocket(this.io)
+    }
+
+    static apnsConfig() {
+        this.apns = new apn.Provider({
+            token: {
+                key: process.env.APPLE_AUTH_KEY,
+                keyId: '8Q29KLD2VK',
+                teamId: '8TMMB69WBG'
+            },
+            production: process.env.ENVIRONMENT === 'BUILD'
+        });
     }
 
     static async databaseConfig() {
@@ -108,6 +125,7 @@ export class Index {
         Index.initJobs()
         await Index.databaseConfig()
         Index.startServer()
+        Index.apnsConfig()
     }
 
 }

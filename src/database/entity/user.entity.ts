@@ -2,6 +2,7 @@ import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, DeleteDateCol
 import {Category} from "./category.entity";
 import {Event} from "./event.entity";
 import {JoinedEventEntity} from "./joined-event.entity";
+import {Device} from "./device.entity";
 
 @Entity()
 export class User {
@@ -45,6 +46,11 @@ export class User {
         cascade: true
     })
     categories: Category[];
+
+    @OneToMany(() => Device, dev => dev.user, {
+        cascade: true
+    })
+    devices: Device[];
 
     @OneToMany(() => Event, ev => ev.user, {
         cascade: true

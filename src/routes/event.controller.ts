@@ -13,7 +13,6 @@ import { Code } from "../utils/Code";
 import { ResponseMessage } from "../utils/ResponseMessage";
 import { UserRepository } from "../database/repository/user.repository";
 import { generateRandomString } from "../utils/global";
-import { pleaseReload } from "../socket/pleaseReload";
 
 const eventRouter = express.Router();
 const error = (message: string) => ({ error: message });
@@ -108,12 +107,6 @@ eventRouter.post('/', apiTokenMiddleware, async (req, res) => {
                 folder: true
             }
         });
-        
-        const pendingUser = eventWithJoins.joinedUser.filter(join => join.invitationStatus === InvitationStatus.INVITED);
-        const acceptedUser = eventWithJoins.joinedUser.filter(join => join.invitationStatus === InvitationStatus.ACCEPTED);
-
-        pleaseReload(acceptedUser.map(j => j.user.id), 'event', eventWithJoins.id);
-        pleaseReload(pendingUser.map(j => j.user.id), 'event-invite', eventWithJoins.id);
 
         res.status(Code.CREATED).send(eventWithJoins);
     } catch (e) {
@@ -230,12 +223,6 @@ eventRouter.put('/:id', apiTokenMiddleware, async (req, res) => {
             }
         });
 
-        const pendingUser = updatedEvent.joinedUser.filter(join => join.invitationStatus === InvitationStatus.INVITED);
-        const acceptedUser = updatedEvent.joinedUser.filter(join => join.invitationStatus === InvitationStatus.ACCEPTED);
-
-        pleaseReload(acceptedUser.map(j => j.user.id), 'event', updatedEvent.id);
-        pleaseReload(pendingUser.map(j => j.user.id), 'event-invite', updatedEvent.id);
-
         res.status(Code.OK).send(eventWithJoins);
     } catch (e) {
         ErrorHandler(e, req, res);
@@ -263,13 +250,7 @@ eventRouter.delete('/:id', apiTokenMiddleware, async (req, res) => {
             return res.status(Code.NOT_FOUND).send(error(ResponseMessage.EVENT_NOT_FOUND));
         }
 
-        const pendingUser = event.joinedUser.filter(join => join.invitationStatus === InvitationStatus.INVITED);
-        const acceptedUser = event.joinedUser.filter(join => join.invitationStatus === InvitationStatus.ACCEPTED);
-
         await EventRepository.remove(event);
-
-        pleaseReload(acceptedUser.map(j => j.user.id), 'event', event.id, 'delete');
-        pleaseReload(pendingUser.map(j => j.user.id), 'event-invite', event.id, 'delete');
 
         res.status(Code.NO_CONTENT).send();
     } catch (e) {
@@ -351,13 +332,6 @@ eventRouter.post('/join', apiTokenMiddleware, async (req, res) => {
             }
         });
 
-        const pendingUser = updatedEvent.joinedUser.filter(join => join.invitationStatus === InvitationStatus.INVITED);
-        const acceptedUser = updatedEvent.joinedUser.filter(join => join.invitationStatus === InvitationStatus.ACCEPTED);
-
-        const reloadIds = [updatedEvent.user.id, ...acceptedUser.map(j => j.user.id)];
-        pleaseReload(reloadIds, 'event', updatedEvent.id);
-        pleaseReload(pendingUser.map(j => j.user.id), 'event-invite', updatedEvent.id);
-
         res.status(Code.OK).send(updatedEvent);
     } catch (e) {
         ErrorHandler(e, req, res);
@@ -414,17 +388,6 @@ eventRouter.post('/leave/:id', apiTokenMiddleware, async (req, res) => {
         }
 
         await JoinedEventRepository.remove(joinedEvent);
-        const updatedEvent = await EventRepository.findOne({
-            where: { id: event.id },
-            relations: ["user", "joinedUser", "joinedUser.user"]
-        });
-
-        const pendingUser = updatedEvent.joinedUser.filter(join => join.invitationStatus === InvitationStatus.INVITED);
-        const acceptedUser = updatedEvent.joinedUser.filter(join => join.invitationStatus === InvitationStatus.ACCEPTED);
-
-        const reloadIds = [updatedEvent.user.id, ...acceptedUser.map(j => j.user.id)];
-        pleaseReload(reloadIds, 'event', updatedEvent.id);
-        pleaseReload(pendingUser.map(j => j.user.id), 'event-invite', updatedEvent.id);
 
         res.status(Code.NO_CONTENT).send();
     } catch (e) {
@@ -508,15 +471,11 @@ eventRouter.put('/invitation/:eventId', apiTokenMiddleware, async (req, res) => 
             return res.status(Code.NOT_FOUND).send(error("Invitation not found"));
         }
         if (status === "refused") {
-            // En cas de refus, supprimer l'invitation
             await JoinedEventRepository.remove(joinRecord);
-            pleaseReload([joinRecord.event.user.id], 'event', joinRecord.event.id);
             return res.status(Code.OK).send({ message: "Invitation refusée et supprimée" });
         } else {
-            // Mettre à jour le status (accepted ou pending)
             joinRecord.invitationStatus = status === "accepted" ? InvitationStatus.ACCEPTED : InvitationStatus.PENDING;
             await JoinedEventRepository.save(joinRecord);
-            pleaseReload([joinRecord.event.user.id], 'event', joinRecord.event.id);
 
             return res.status(Code.OK).send({
                 joinRecord
