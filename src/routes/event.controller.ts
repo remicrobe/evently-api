@@ -498,6 +498,33 @@ eventRouter.put('/invitation/:eventId', apiTokenMiddleware, async (req, res) => 
     }
 });
 
+eventRouter.get('/by-invite/:token', apiTokenMiddleware, async (req, res) => {
+    /**
+     #swagger.tags = ['Event']
+     #swagger.path = '/events/by-invite/{token}'
+     #swagger.description = 'Return full event entity'
+     **/
+    try {
+        const { token } = req.params;
+
+        const event = await EventRepository.findOne({
+            where: { inviteToken: Equal(token) },
+            relations: {
+                user: true,
+                joinedUser: {
+                    user: true
+                },
+                category: true,
+                folder: true
+            }
+        });
+
+        res.send(event);
+    } catch (e) {
+        ErrorHandler(e, req, res);
+    }
+})
+
 /**
  * Get user events
  */

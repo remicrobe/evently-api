@@ -925,6 +925,35 @@
         }
       }
     },
+    "/events/by-invite/{token}": {
+      "get": {
+        "tags": [
+          "Event"
+        ],
+        "description": "Return full event entity",
+        "parameters": [
+          {
+            "name": "token",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    },
     "/folders": {
       "post": {
         "tags": [
