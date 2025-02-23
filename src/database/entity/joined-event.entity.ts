@@ -10,9 +10,6 @@ import {
 } from "typeorm";
 import { Event } from "./event.entity";
 import { User } from "./user.entity";
-import {EventRepository} from "../repository/event.repository";
-import {pleaseReload} from "../../socket/pleaseReload";
-
 export enum InvitationStatus {
     INVITED = "invited",
     PENDING = "pending",
@@ -46,62 +43,4 @@ export class JoinedEventEntity {
         default: InvitationStatus.INVITED
     })
     invitationStatus: InvitationStatus;
-
-    @AfterInsert()
-    async advertUser() {
-        const fullEvent = await EventRepository.findOne({
-            where: {
-                id: this.eventId
-            },
-            relations: {
-                user: {
-                    devices: true
-                },
-                joinedUser: {
-                    user: true
-                },
-                category: true,
-                folder: true
-            }
-        })
-
-        const pendingUser = fullEvent.joinedUser.filter(join => join.invitationStatus === InvitationStatus.INVITED).map(j => j.user.id);
-        const acceptedUser = fullEvent.joinedUser.filter(join => join.invitationStatus === InvitationStatus.ACCEPTED).map(j => j.user.id);
-
-        if (this.invitationStatus !== InvitationStatus.INVITED) {
-            pendingUser.push(fullEvent.userID)
-        }
-
-        pleaseReload(pendingUser, 'event', fullEvent.id);
-        pleaseReload(acceptedUser, 'event-invite', fullEvent.id);
-    }
-
-    @AfterUpdate()
-    async adverUserOfUpdate() {
-        const fullEvent = await EventRepository.findOne({
-            where: {
-                id: this.eventId
-            },
-            relations: {
-                user: {
-                    devices: true
-                },
-                joinedUser: {
-                    user: true
-                },
-                category: true,
-                folder: true
-            }
-        })
-
-        const pendingUser = fullEvent.joinedUser.filter(join => join.invitationStatus === InvitationStatus.INVITED).map(j => j.user.id);
-        const acceptedUser = fullEvent.joinedUser.filter(join => join.invitationStatus === InvitationStatus.ACCEPTED).map(j => j.user.id);
-
-        if (this.invitationStatus !== InvitationStatus.INVITED) {
-            pendingUser.push(fullEvent.userID)
-        }
-
-        pleaseReload(pendingUser, 'event', fullEvent.id);
-        pleaseReload(acceptedUser, 'event-invite', fullEvent.id);
-    }
 }

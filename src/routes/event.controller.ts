@@ -108,6 +108,8 @@ eventRouter.post('/', apiTokenMiddleware, async (req, res) => {
             }
         });
 
+        await EventRepository.advertUser(eventWithJoins.id)
+
         res.status(Code.CREATED).send(eventWithJoins);
     } catch (e) {
         ErrorHandler(e, req, res);
@@ -223,6 +225,8 @@ eventRouter.put('/:id', apiTokenMiddleware, async (req, res) => {
             }
         });
 
+        await EventRepository.advertUser(eventWithJoins.id)
+
         res.status(Code.OK).send(eventWithJoins);
     } catch (e) {
         ErrorHandler(e, req, res);
@@ -249,6 +253,8 @@ eventRouter.delete('/:id', apiTokenMiddleware, async (req, res) => {
         if (!event) {
             return res.status(Code.NOT_FOUND).send(error(ResponseMessage.EVENT_NOT_FOUND));
         }
+
+        await EventRepository.advertUser(event.id, 'delete')
 
         await EventRepository.remove(event);
 
@@ -332,6 +338,8 @@ eventRouter.post('/join', apiTokenMiddleware, async (req, res) => {
             }
         });
 
+        await JoinedEventRepository.advertUser(event.id, join);
+
         res.status(Code.OK).send(updatedEvent);
     } catch (e) {
         ErrorHandler(e, req, res);
@@ -386,6 +394,8 @@ eventRouter.post('/leave/:id', apiTokenMiddleware, async (req, res) => {
         if (!joinedEvent) {
             return res.status(Code.NOT_FOUND).send(error(ResponseMessage.EVENT_NOT_FOUND_OR_NOT_MEMBER));
         }
+
+        await JoinedEventRepository.advertUser(event.id, joinedEvent);
 
         await JoinedEventRepository.remove(joinedEvent);
 
@@ -470,12 +480,14 @@ eventRouter.put('/invitation/:eventId', apiTokenMiddleware, async (req, res) => 
         if (!joinRecord) {
             return res.status(Code.NOT_FOUND).send(error("Invitation not found"));
         }
+
         if (status === "refused") {
             await JoinedEventRepository.remove(joinRecord);
             return res.status(Code.OK).send({ message: "Invitation refusée et supprimée" });
         } else {
             joinRecord.invitationStatus = status === "accepted" ? InvitationStatus.ACCEPTED : InvitationStatus.PENDING;
             await JoinedEventRepository.save(joinRecord);
+            await JoinedEventRepository.advertUser(joinRecord.eventId, joinRecord);
 
             return res.status(Code.OK).send({
                 joinRecord
