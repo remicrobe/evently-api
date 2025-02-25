@@ -1,5 +1,5 @@
 import express = require("express");
-import { getRepository } from "typeorm";
+import { Equal, getRepository } from "typeorm";
 import { Device, DeviceType } from "../database/entity/device.entity";
 import { checkRequiredField } from "../utils/global";
 import { ErrorHandler } from "../utils/error/error-handler";
@@ -31,9 +31,18 @@ notificationsRouter.post('/subscribe/ios', apiTokenMiddleware, async (req, res) 
 
         const user = res.locals.connectedUser;
 
-        const existingDevice = await DeviceRepository.findOne({ where: { user, device: DeviceType.apple } });
+        const existingDevice = await DeviceRepository.findOne ({
+            where: {
+                user: {
+                    id: Equal (user.id)
+                },
+                device: DeviceType.apple
+            }
+        });
+
         if (existingDevice) {
-            await DeviceRepository.softRemove(existingDevice);
+            existingDevice.deletedDate = new Date();
+            await DeviceRepository.save(existingDevice);
         }
 
         const newDevice = DeviceRepository.create({
@@ -41,6 +50,7 @@ notificationsRouter.post('/subscribe/ios', apiTokenMiddleware, async (req, res) 
             device: DeviceType.apple,
             deviceId: deviceToken
         });
+
         await DeviceRepository.save(newDevice);
 
         return res.send({ msg: 'Device subscribed successfully' });

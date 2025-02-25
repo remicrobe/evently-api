@@ -89,7 +89,7 @@ export class Index {
     static apnsConfig() {
         this.apns = new apn.Provider({
             token: {
-                key: process.env.APPLE_AUTH_KEY,
+                key: process.env.APPLE_APNS_KEY,
                 keyId: '8Q29KLD2VK',
                 teamId: '8TMMB69WBG'
             },
