@@ -26,7 +26,7 @@ export class ApnUtils {
                 note.payload = {eventId, type: notificationType};
         }
 
-        note.topic = "com.Sementa.Evently";
+        note.topic = "sementa.com.Evently";
 
         Index.apns.send(note, deviceToken)
             .then(result => {
