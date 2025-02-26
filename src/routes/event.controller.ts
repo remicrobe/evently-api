@@ -225,7 +225,7 @@ eventRouter.put('/:id', apiTokenMiddleware, async (req, res) => {
             }
         });
 
-        await EventRepository.advertUser(eventWithJoins.id)
+        await EventRepository.advertUser(eventWithJoins.id, 'update')
 
         res.status(Code.OK).send(eventWithJoins);
     } catch (e) {

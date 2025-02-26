@@ -6,7 +6,7 @@ import {DeviceType} from "../entity/device.entity";
 import {ApnUtils} from "../../utils/apn.utils";
 
 export const EventRepository = AppDataSource.getRepository(Event).extend({
-    async advertUser(eventId: number, action?: 'delete') {
+    async advertUser(eventId: number, action?: 'delete' | 'update') {
         const fullEvent = await EventRepository.findOne({
             where: { id: eventId},
             relations: {
@@ -26,6 +26,8 @@ export const EventRepository = AppDataSource.getRepository(Event).extend({
             }
         });
 
+        const typePush = `event${action ? `-${action}` : ''}`;
+
         const pendingUser = fullEvent.joinedUser.filter(join => join.invitationStatus === InvitationStatus.INVITED);
         const acceptedUser = fullEvent.joinedUser.filter(join => join.invitationStatus === InvitationStatus.ACCEPTED);
 
@@ -36,7 +38,7 @@ export const EventRepository = AppDataSource.getRepository(Event).extend({
             acceptedUser.forEach(join => {
                 join.user.devices?.filter(device => device.device === DeviceType.apple)
                     .forEach(device => {
-                        ApnUtils.sendAPNNotification("event", fullEvent.id, device.deviceId);
+                        ApnUtils.sendAPNNotification(typePush, fullEvent.id, device.deviceId, fullEvent.name);
                     });
             });
             pendingUser.forEach(join => {
@@ -56,7 +58,7 @@ export const EventRepository = AppDataSource.getRepository(Event).extend({
 
                 join.user.devices?.filter(device => device.device === DeviceType.apple)
                     .forEach(device => {
-                        ApnUtils.sendAPNNotification("event", fullEvent.id, device.deviceId);
+                        ApnUtils.sendAPNNotification(typePush, fullEvent.id, device.deviceId, fullEvent.name, fullEvent.folder.name);
                     });
             });
 
@@ -64,7 +66,7 @@ export const EventRepository = AppDataSource.getRepository(Event).extend({
             if (fullEvent.user.id !== fullEvent.folder.user.id) {
                 fullEvent.user.devices?.filter(device => device.device === DeviceType.apple)
                     .forEach(device => {
-                        ApnUtils.sendAPNNotification("event", fullEvent.id, device.deviceId);
+                        ApnUtils.sendAPNNotification(typePush, fullEvent.id, device.deviceId, fullEvent.name, fullEvent.folder.name);
                     });
             }
         }
