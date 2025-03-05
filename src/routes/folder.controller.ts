@@ -88,7 +88,8 @@ folderRouter.post('/', apiTokenMiddleware, async (req, res) => {
             relations: {
                 joinedUser: {
                     user: true
-                }
+                },
+                user: true
             }
         });
 
@@ -243,6 +244,7 @@ folderRouter.get('/', apiTokenMiddleware, async (req, res) => {
         const folders = await FolderRepository.createQueryBuilder("folder")
             .leftJoinAndSelect("folder.joinedUser", "joined")
             .leftJoinAndSelect("joined.user", "joinedUser")
+            .leftJoinAndSelect("folder.user", "user")
             .where("folder.userID = :userId", { userId: user.id })
             .orWhere("joined.userID = :userId", { userId: user.id })
             .getMany();
