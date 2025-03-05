@@ -140,7 +140,7 @@ userRouter.post('/register', rateLimiterMiddleware(60 * 15, 5), async (req, res)
         )
 
         user.username = `${firstName}${lastName}`.toLowerCase() + '#' + Math.floor(1000 + Math.random() * 9000);
-        user.username = user.username.normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+        user.username = user.username.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(" ", "")
         user.firstName = firstName;
         user.lastName = lastName;
 
