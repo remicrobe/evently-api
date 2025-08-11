@@ -1,33 +1,31 @@
 name: Deploying
 
 on:
-    push:
-        branches:
-            - main
+  push:
+    branches:
+      - main
+
 jobs:
-    deploy:
-        name: Deploy
-        runs-on: ubuntu-latest
+  deploy:
+    runs-on: ubuntu-latest
 
-        steps:
-            -   name: Checkout code
-                uses: actions/checkout@v2
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
 
-            -   name: executing remote ssh commands using ssh key
-                id: ssh_deploy
-                uses: appleboy/ssh-action@master
-                with:
-                    host: ${{ secrets.HOST }}
-                    username: ${{ secrets.USERNAME }}
-                    password: ${{ secrets.PASSWORD }}
-                    script: |
-                        cd node
-                        cd evently-api
-                        git stash
-                        git stash clear
-                        git pull
-                        pm2 stop evently-api
-                        pm2 delete evently-api
-                        npm install
-                        npm run build
-                        pm2 start "npm run start" --name evently-api
+      - name: Install sshpass
+        run: sudo apt-get update && sudo apt-get install -y sshpass
+
+      - name: Run deploy.sh on remote server via sshpass
+        run: |
+          sshpass -p "${{ secrets.PASSWORD }}" ssh -o StrictHostKeyChecking=no ${{ secrets.USERNAME }}@${{ secrets.HOST }} << 'EOF'
+          cd evently-api
+          git stash
+          git stash clear
+          git pull
+          pm2 stop evently-api
+          pm2 delete evently-api
+          npm install
+          npm run build
+          pm2 start "npm run start" --name evently-api
+          EOF
