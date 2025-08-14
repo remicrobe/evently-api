@@ -14,6 +14,7 @@ import * as apn from "node-apn";
 import {initSocket} from "./socket/initSocket";
 import {authRouter} from "./routes/auth.controller";
 import {userRouter} from "./routes/user.controller";
+import * as Sentry from '@sentry/node';
 import {friendsRouter} from "./routes/friends.controller";
 import {categoryRouter} from "./routes/category.controller";
 import {eventRouter} from "./routes/event.controller";
@@ -21,6 +22,7 @@ import {folderRouter} from "./routes/folder.controller";
 import {initJobs} from "./jobs/manager.job";
 import {notificationsRouter} from "./routes/notifications.controller";
 import {Provider} from "node-apn";
+import { ErrorHandler } from "./utils/error/error-handler";
 
 export class Index {
     static jwtKey = process.env.JWT_SECRET;
@@ -110,18 +112,27 @@ export class Index {
         });
     }
 
+    static sentryConfig() {
+        Sentry.setupExpressErrorHandler(Index.app);
+
+        Index.app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+            ErrorHandler(err, req, res)
+        });
+    }
+
     static initJobs() {
         initJobs();
     }
 
     static async main() {
         Index.swaggerConfig()
-        Index.statsConfig()
         Index.globalConfig()
         Index.routeConfig()
         Index.socketConfig()
         Index.imageFolder()
         Index.redirectConfig()
+        Index.sentryConfig()
+        Index.statsConfig()
         Index.initJobs()
         await Index.databaseConfig()
         Index.startServer()

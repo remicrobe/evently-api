@@ -13,6 +13,7 @@
   "author": "Rémi WEIL",
   "license": "ISC",
   "dependencies": {
+    "@sentry/node": "^10.5.0",
     "and": "^0.0.3",
     "basic-ftp": "^5.0.5",
     "cors": "^2.8.5",

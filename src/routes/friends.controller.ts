@@ -9,121 +9,113 @@ import { FriendsRepository } from "../database/repository/friends.repository";
 import { Friends } from "../database/entity/friends.entity";
 import { statusMsg } from "../utils/global";
 import { pleaseReload } from "../socket/pleaseReload";
-import {apiTokenMiddleware} from "../middlewares/checkApiToken";
+import { apiTokenMiddleware } from "../middlewares/checkApiToken";
 
-const friendsRouter = express.Router();
+const friendsRouter = express.Router ();
 
-friendsRouter.post('/', apiTokenMiddleware, async (req, res) => {
+friendsRouter.post ('/', apiTokenMiddleware, async (req, res) => {
     /**
-        #swagger.tags = ['Friends']
-        #swagger.path = '/friends-request/'
-        #swagger.method = 'post'
-        #swagger.description = 'Send a friend request to a user.'
-        #swagger.parameters['body'] = {
-            in: 'body',
-            description: 'Username of the friends',
-            required: true,
-            schema: {
-                searchField: 'azeraze#12345'
-            }
-        }
-        #swagger.responses[200] = {
-            description: 'Friend request sent successfully.',
-            schema: {
-                $ref: '#/definitions/FriendsRequest'
-            }
-        }
-        #swagger.responses[404] = {
-            description: 'User not found.',
-            schema: { status: '404', msg: 'User not found.' }
-        }
-        #swagger.responses[422] = {
-            description: 'Friend request already exists or they are already friends.',
-            schema: { status: '422', msg: 'Already friends or request exists.' }
-        }
-    */
-    try {
-        let { searchField } = req.body;
-        let user: User = res.locals.connectedUser;
+     #swagger.tags = ['Friends']
+     #swagger.path = '/friends-request/'
+     #swagger.method = 'post'
+     #swagger.description = 'Send a friend request to a user.'
+     #swagger.parameters['body'] = {
+     in: 'body',
+     description: 'Username of the friends',
+     required: true,
+     schema: {
+     searchField: 'azeraze#12345'
+     }
+     }
+     #swagger.responses[200] = {
+     description: 'Friend request sent successfully.',
+     schema: {
+     $ref: '#/definitions/FriendsRequest'
+     }
+     }
+     #swagger.responses[404] = {
+     description: 'User not found.',
+     schema: { status: '404', msg: 'User not found.' }
+     }
+     #swagger.responses[422] = {
+     description: 'Friend request already exists or they are already friends.',
+     schema: { status: '422', msg: 'Already friends or request exists.' }
+     }
+     */
+    let { searchField } = req.body;
+    let user: User = res.locals.connectedUser;
 
-        let userRequested = await UserRepository.findOneOrFail({
-            where: [
-                { username: Equal(searchField) },
-            ]
-        });
+    let userRequested = await UserRepository.findOneOrFail ({
+        where: [
+            { username: Equal (searchField) },
+        ]
+    });
 
-        let alreadyFriends = await FriendsRepository.areTheyFriends(user.id, userRequested.id);
-        if (alreadyFriends) {
-            return res.status(422).send('They are already friends');
-        }
-
-        let alreadyRequested = await FriendsRequestRepository.alreadyRequested(user.id, userRequested.id);
-        if (alreadyRequested) {
-            return res.status(422).send('Une requete d\'ami existe déjà');
-        }
-
-        let friendsRequest = new FriendsRequest();
-        friendsRequest.asker = user;
-        friendsRequest.receiver = userRequested;
-
-        res.send(await FriendsRequestRepository.save(friendsRequest));
-
-        pleaseReload(friendsRequest.receiver.id, 'friendRequest', 0);
-    } catch (e) {
-        return ErrorHandler(e, req, res);
+    let alreadyFriends = await FriendsRepository.areTheyFriends (user.id, userRequested.id);
+    if (alreadyFriends) {
+        return res.status (422).send ('They are already friends');
     }
+
+    let alreadyRequested = await FriendsRequestRepository.alreadyRequested (user.id, userRequested.id);
+    if (alreadyRequested) {
+        return res.status (422).send ('Une requete d\'ami existe déjà');
+    }
+
+    let friendsRequest = new FriendsRequest ();
+    friendsRequest.asker = user;
+    friendsRequest.receiver = userRequested;
+
+    res.send (await FriendsRequestRepository.save (friendsRequest));
+
+    pleaseReload (friendsRequest.receiver.id, 'friendRequest', 0);
 });
 
-friendsRouter.delete('/', apiTokenMiddleware, async (req, res) => {
+friendsRouter.delete ('/', apiTokenMiddleware, async (req, res) => {
     /** #swagger.tags = ['Friends']
-        #swagger.path = '/friends-request/{username}'
-        #swagger.method = 'delete'
-        #swagger.description = 'Remove a friend.'
-        #swagger.parameters['body'] = {
-            in: 'body',
-            description: 'Username of the friends',
-            required: true,
-            schema: {
-                field: 'azeraze#12345'
-            }
-        }
-        #swagger.responses[200] = {
-            description: 'Friend removed successfully.',
-            schema: { status: '200', msg: 'Bien supprimé' }
-        }
-        #swagger.responses[404] = {
-            description: 'User not found.',
-            schema: { status: '404', msg: 'User not found.' }
-        }
-        #swagger.responses[422] = {
-            description: 'Users are not friends.',
-            schema: { status: '422', msg: 'They are not friends' }
-        }
-    */
-    try {
-        let username = req.body.field;
-        let user: User = res.locals.connectedUser;
+     #swagger.path = '/friends-request/{username}'
+     #swagger.method = 'delete'
+     #swagger.description = 'Remove a friend.'
+     #swagger.parameters['body'] = {
+     in: 'body',
+     description: 'Username of the friends',
+     required: true,
+     schema: {
+     field: 'azeraze#12345'
+     }
+     }
+     #swagger.responses[200] = {
+     description: 'Friend removed successfully.',
+     schema: { status: '200', msg: 'Bien supprimé' }
+     }
+     #swagger.responses[404] = {
+     description: 'User not found.',
+     schema: { status: '404', msg: 'User not found.' }
+     }
+     #swagger.responses[422] = {
+     description: 'Users are not friends.',
+     schema: { status: '422', msg: 'They are not friends' }
+     }
+     */
+    let username = req.body.field;
+    let user: User = res.locals.connectedUser;
 
-        let userRequested = await UserRepository.findOneByOrFail({
-            username: Equal(username)
-        });
+    let userRequested = await UserRepository.findOneByOrFail ({
+        username: Equal (username)
+    });
 
-        let alreadyFriends = await FriendsRepository.getFriends(user.id, userRequested.id);
-        if (!alreadyFriends) {
-            return res.status(422).send('They are no friends');
-        }
-
-        await FriendsRepository.remove(alreadyFriends);
-
-        res.send(statusMsg(200, 'Bien supprimé'));
-
-        pleaseReload([alreadyFriends.user1.id, alreadyFriends.user2.id], 'friend', 0);
-    } catch (e) {
-        return ErrorHandler(e, req, res);
+    let alreadyFriends = await FriendsRepository.getFriends (user.id, userRequested.id);
+    if (!alreadyFriends) {
+        return res.status (422).send ('They are no friends');
     }
+
+    await FriendsRepository.remove (alreadyFriends);
+
+    res.send (statusMsg (200, 'Bien supprimé'));
+
+    pleaseReload ([ alreadyFriends.user1.id, alreadyFriends.user2.id ], 'friend', 0);
 });
 
-friendsRouter.get('/', apiTokenMiddleware, async (req, res) => {
+friendsRouter.get ('/', apiTokenMiddleware, async (req, res) => {
     /*  #swagger.tags = ['Friends']
         #swagger.path = '/friends-request'
         #swagger.method = 'get'
@@ -136,28 +128,24 @@ friendsRouter.get('/', apiTokenMiddleware, async (req, res) => {
             ]
         }
     */
-    try {
-        let user: User = res.locals.connectedUser;
+    let user: User = res.locals.connectedUser;
 
-        let userRequests = await FriendsRequestRepository.find({
-            where: {
-                receiver: {
-                    id: Equal(user.id)
-                }
-            },
-            relations: {
-                asker: true,
-                receiver: true
+    let userRequests = await FriendsRequestRepository.find ({
+        where: {
+            receiver: {
+                id: Equal (user.id)
             }
-        });
+        },
+        relations: {
+            asker: true,
+            receiver: true
+        }
+    });
 
-        return res.send(userRequests);
-    } catch (e) {
-        return ErrorHandler(e, req, res);
-    }
+    return res.send (userRequests);
 });
 
-friendsRouter.put('/:requestId', apiTokenMiddleware, async (req, res) => {
+friendsRouter.put ('/:requestId', apiTokenMiddleware, async (req, res) => {
     /*  #swagger.tags = ['Friends']
         #swagger.path = '/friends-request/{requestId}'
         #swagger.method = 'put'
@@ -192,46 +180,42 @@ friendsRouter.put('/:requestId', apiTokenMiddleware, async (req, res) => {
             schema: { status: '404', msg: 'Friend request not found.' }
         }
     */
-    try {
-        let requestId = parseInt(req.params.requestId);
-        let user: User = res.locals.connectedUser;
-        let { accept } = req.body;
+    let requestId = parseInt (req.params.requestId);
+    let user: User = res.locals.connectedUser;
+    let { accept } = req.body;
 
-        let friendRequest = await FriendsRequestRepository.findOneOrFail({
-            where: {
-                id: Equal(requestId),
-                receiver: { id: Equal(user.id) }
-            },
-            relations: {
-                asker: true,
-                receiver: true
-            }
-        });
-
-        let friends;
-        if (accept) {
-            friends = new Friends();
-            friends.user1 = friendRequest.asker;
-            friends.user2 = friendRequest.receiver;
-            await FriendsRepository.save(friends);
+    let friendRequest = await FriendsRequestRepository.findOneOrFail ({
+        where: {
+            id: Equal (requestId),
+            receiver: { id: Equal (user.id) }
+        },
+        relations: {
+            asker: true,
+            receiver: true
         }
+    });
 
-        await FriendsRequestRepository.remove(friendRequest);
+    let friends;
+    if (accept) {
+        friends = new Friends ();
+        friends.user1 = friendRequest.asker;
+        friends.user2 = friendRequest.receiver;
+        await FriendsRepository.save (friends);
+    }
 
-        res.send({
-            isAccepted: accept,
-            user: friendRequest.asker
-        });
+    await FriendsRequestRepository.remove (friendRequest);
 
-        if (accept) {
-            pleaseReload(friends.user1.id, 'friend', 0);
-        }
-    } catch (e) {
-        return ErrorHandler(e, req, res);
+    res.send ({
+        isAccepted: accept,
+        user: friendRequest.asker
+    });
+
+    if (accept) {
+        pleaseReload (friends.user1.id, 'friend', 0);
     }
 });
 
-friendsRouter.get('/sent', apiTokenMiddleware, async (req, res) => {
+friendsRouter.get ('/sent', apiTokenMiddleware, async (req, res) => {
     /*  #swagger.tags = ['Friends']
         #swagger.path = '/friends-request/sent'
         #swagger.method = 'get'
@@ -244,19 +228,15 @@ friendsRouter.get('/sent', apiTokenMiddleware, async (req, res) => {
             ]
         }
     */
-    try {
-        let user: User = res.locals.connectedUser;
+    let user: User = res.locals.connectedUser;
 
-        let sentRequests = await FriendsRequestRepository.getPendingRequests(user.id);
+    let sentRequests = await FriendsRequestRepository.getPendingRequests (user.id);
 
-        return res.send(sentRequests);
-    } catch (e) {
-        return ErrorHandler(e, req, res);
-    }
+    return res.send (sentRequests);
 });
 
 
-friendsRouter.delete('/sent/:requestId', apiTokenMiddleware, async (req, res) => {
+friendsRouter.delete ('/sent/:requestId', apiTokenMiddleware, async (req, res) => {
     /*  #swagger.tags = ['Friends']
         #swagger.path = '/friends-request/sent/{requestId}'
         #swagger.method = 'delete'
@@ -276,27 +256,23 @@ friendsRouter.delete('/sent/:requestId', apiTokenMiddleware, async (req, res) =>
             schema: { status: '404', msg: 'Friend request not found.' }
         }
     */
-    try {
-        let requestId = parseInt(req.params.requestId);
-        let user: User = res.locals.connectedUser;
+    let requestId = parseInt (req.params.requestId);
+    let user: User = res.locals.connectedUser;
 
-        let friendRequest = await FriendsRequestRepository.findOneOrFail({
-            where: {
-                id: Equal(requestId),
-                asker: { id: Equal(user.id) }
-            },
-            relations: {
-                asker: true,
-                receiver: true
-            }
-        });
+    let friendRequest = await FriendsRequestRepository.findOneOrFail ({
+        where: {
+            id: Equal (requestId),
+            asker: { id: Equal (user.id) }
+        },
+        relations: {
+            asker: true,
+            receiver: true
+        }
+    });
 
-        await FriendsRequestRepository.remove(friendRequest);
+    await FriendsRequestRepository.remove (friendRequest);
 
-        res.send(statusMsg(200, 'Friend request deleted successfully.'));
-    } catch (e) {
-        return ErrorHandler(e, req, res);
-    }
+    res.send (statusMsg (200, 'Friend request deleted successfully.'));
 });
 
 
