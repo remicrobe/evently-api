@@ -1,6 +1,8 @@
 import * as dotenv from 'dotenv';
 
 dotenv.config()
+
+import './sentry/instrument'
 import * as express from 'express'
 import * as cors from 'cors'
 import {AppDataSource} from "./database/datasource";
