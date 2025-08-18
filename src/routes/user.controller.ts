@@ -10,6 +10,9 @@ import { generateJwt } from "../utils/jwt/generate";
 import { rateLimiterMiddleware } from "../middlewares/rateLimiter";
 import { apiTokenMiddleware } from "../middlewares/checkApiToken";
 import { FriendsRepository } from "../database/repository/friends.repository";
+import { EventRepository } from "../database/repository/event.repository";
+import { DateTime } from "luxon";
+import ical, { ICalCalendarMethod } from 'ical-generator';
 
 const userRouter = express.Router ();
 
@@ -296,6 +299,58 @@ userRouter.get ('/refresh-token/:refreshToken', async (req, res) => {
         token: generateJwt ("token", collab.id),
         refreshToken: generateJwt ("refreshToken", collab.id)
     });
+});
+
+userRouter.get ('/ics-link', apiTokenMiddleware, async (req, res) => {
+    let user: User = res.locals.connectedUser;
+
+    const token = generateJwt('icsToken', user.id)
+
+    return res.send ({
+        icsLink: `/user/events.ics?token=${token}`
+    });
+});
+
+userRouter.get('/events.ics', async (req, res) => {
+    const { token } = req.query as { token?: string };
+    if (!token) return res.sendStatus(400);
+
+    const userId = verifyJwt('icsToken', token);
+    if (!userId) return res.sendStatus(401);
+
+    const events = await EventRepository.userEventsBaseQuery(userId).getMany();
+
+    const calendar = ical({ name: 'Mes événements' });
+
+    events.forEach(evt => {
+        if (!evt.targetDate) return;
+
+        // Luxon DateTime
+        const startDT = DateTime.fromJSDate(evt.targetDate);
+        let allDay = startDT.hour === 0 && startDT.minute === 0;
+
+        let endDT;
+        if (allDay) {
+            // Événement toute la journée
+            endDT = startDT.plus({ days: 1 });
+        } else {
+            // Événement avec heure spécifique → durée 1h
+            endDT = startDT.plus({ hours: 1 });
+        }
+
+        calendar.createEvent({
+            start: startDT.toJSDate(),
+            end: endDT.toJSDate(),
+            summary: evt.name,
+            description: evt.description || '',
+            location: evt.location || '',
+            allDay
+        });
+    });
+
+    res.setHeader('Content-Type', 'text/calendar');
+    res.setHeader('Content-Disposition', 'attachment; filename=events.ics');
+    res.send(calendar.toString());
 });
 
 export { userRouter }

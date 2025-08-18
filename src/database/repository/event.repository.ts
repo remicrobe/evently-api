@@ -4,6 +4,7 @@ import {InvitationStatus} from "../entity/joined-event.entity";
 import {pleaseReload} from "../../socket/pleaseReload";
 import {DeviceType} from "../entity/device.entity";
 import {ApnUtils} from "../../utils/apn.utils";
+import { Brackets } from "typeorm";
 
 export const EventRepository = AppDataSource.getRepository(Event).extend({
     async advertUser(eventId: number, action?: 'delete' | 'update') {
@@ -70,5 +71,28 @@ export const EventRepository = AppDataSource.getRepository(Event).extend({
                     });
             }
         }
+    },
+
+    userEventsBaseQuery(userId: number) {
+        const query = EventRepository.createQueryBuilder ("event")
+                .leftJoinAndSelect ("event.joinedUser", "joinedUser")
+                .leftJoinAndSelect ("event.user", "creator")
+                .leftJoinAndSelect ("joinedUser.user", "joinedUserUser")
+                .leftJoinAndSelect ("event.category", "category")
+                .leftJoinAndSelect ("event.folder", "folder")
+                .leftJoinAndSelect ("folder.joinedUser", "folderJoinedUser")
+                .orderBy ('event.targetDate', 'ASC')
+        
+            query.where (new Brackets (qb => {
+                qb.where ("event.userID = :userId", { userId: userId })
+                    .orWhere ("joinedUserUser.id = :userId AND joinedUser.invitationStatus = :accepted", {
+                        userId: userId,
+                        accepted: InvitationStatus.ACCEPTED
+                    })
+                    .orWhere ("folder.userID = :userId", { userId: userId })
+                    .orWhere ("folderJoinedUser.userID = :userId", { userId: userId })
+            }))
+         
+            return query;
     }
 });

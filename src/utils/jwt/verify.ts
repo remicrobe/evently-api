@@ -1,7 +1,7 @@
 import * as jwt from 'jsonwebtoken'
 import {Index} from "../../index";
 
-export function verifyJwt(type: 'token' | 'refreshToken', token) : number | false {
+export function verifyJwt(type: 'token' | 'refreshToken' | 'icsToken', token) : number | false {
     try {
         const decoded = jwt.verify(token, Index.jwtKey);
 

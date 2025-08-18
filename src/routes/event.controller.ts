@@ -515,24 +515,7 @@ eventRouter.get ('/:id?', apiTokenMiddleware, async (req, res) => {
     const user: User = res.locals.connectedUser;
     const id = req.params.id;
 
-    const query = EventRepository.createQueryBuilder ("event")
-        .leftJoinAndSelect ("event.joinedUser", "joinedUser")
-        .leftJoinAndSelect ("event.user", "creator")
-        .leftJoinAndSelect ("joinedUser.user", "joinedUserUser")
-        .leftJoinAndSelect ("event.category", "category")
-        .leftJoinAndSelect ("event.folder", "folder")
-        .leftJoinAndSelect ("folder.joinedUser", "folderJoinedUser")
-        .orderBy ('event.targetDate', 'ASC')
-
-    query.where (new Brackets (qb => {
-        qb.where ("event.userID = :userId", { userId: user.id })
-            .orWhere ("joinedUserUser.id = :userId AND joinedUser.invitationStatus = :accepted", {
-                userId: user.id,
-                accepted: InvitationStatus.ACCEPTED
-            })
-            .orWhere ("folder.userID = :userId", { userId: user.id })
-            .orWhere ("folderJoinedUser.userID = :userId", { userId: user.id })
-    }))
+    const query = EventRepository.userEventsBaseQuery(user.id);
 
     if (id) {
         query.andWhere ('event.id = :id', { id })
