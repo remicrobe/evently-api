@@ -326,12 +326,13 @@ userRouter.get('/events.ics', async (req, res) => {
         if (!evt.targetDate) return;
 
         // Luxon DateTime
-        const startDT = DateTime.fromJSDate(evt.targetDate);
+        let startDT = DateTime.fromJSDate(evt.targetDate);
         let allDay = startDT.hour === 0 && startDT.minute === 0;
 
         let endDT;
         if (allDay) {
             // Événement toute la journée
+            startDT = startDT.plus({ days: 1 });
             endDT = startDT.plus({ days: 1 });
         } else {
             // Événement avec heure spécifique → durée 1h
